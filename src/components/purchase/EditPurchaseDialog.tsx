@@ -63,6 +63,14 @@ export function EditPurchaseDialog({
       placeholder: "Enter quantity",
       validate: (value: number) => validateField("quantity", value),
     },
+    {
+      name: "requestDate",
+      label: "Request Date",
+      type: "date" as const,
+      required: true,
+      placeholder: "Enter request date",
+      validate: (value: string) => validateField("requestDate", value),
+    }
   ];
 
   const handleSubmit = async () => {
@@ -81,6 +89,12 @@ export function EditPurchaseDialog({
       return;
     }
 
+    // Format the requestDate to "yyyy-MM-dd"
+    const dateParts = editPurchase.requestDate.split("T")[0].split("-");
+    const formattedDate = `${dateParts[0]}-${dateParts[1]}-${dateParts[2]}`;
+    const formattedPurchase = { ...editPurchase, requestDate: formattedDate };
+
+    setEditPurchase(formattedPurchase);
     onSubmit();
   };
 

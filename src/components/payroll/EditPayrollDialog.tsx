@@ -1,10 +1,9 @@
-import { useId } from "react";
 import { EditDialog } from "@/components/ui/edit-dialog";
 
 interface PayrollData {
   employeeName: string;
   salary: number;
-  payDate: string;
+  pay_date: string;
 }
 
 interface EditPayrollDialogProps {
@@ -15,19 +14,6 @@ interface EditPayrollDialogProps {
   onSubmit: () => void;
 }
 
-/**
- * Cleans a date string by trimming extra fractional seconds beyond milliseconds,
- * then returns a formatted string "yyyy-MM-dd".
- * If the date is invalid, it returns an empty string.
- */
-const formatDate = (dateString: string): string => {
-  // Remove extra fractional digits if present (keep only up to 3 digits for milliseconds)
-  const cleaned = dateString.replace(/\.(\d{3})\d+/, ".$1");
-  const date = new Date(cleaned);
-  if (isNaN(date.getTime())) return "";
-  return date.toISOString().split("T")[0];
-};
-
 export function EditPayrollDialog({
   isOpen,
   onOpenChange,
@@ -35,18 +21,87 @@ export function EditPayrollDialog({
   setEditPayroll,
   onSubmit,
 }: EditPayrollDialogProps) {
-  // Generate a unique ID for the description element
-  const descriptionId = useId();
+  const validateField = (
+    name: keyof PayrollData,
+    value: any
+  ): string | null => {
+    switch (name) {
+      case "employeeName":
+        if (!value || value.trim() === "") return "Employee name is required";
+        if (value.length > 100)
+          return "Employee name must be less than 100 characters";
+        return null;
+      case "salary":
+        if (value <= 0) return "Salary must be greater than 0";
+        if (value > 1000000000) return "Salary must be less than 1,000,000,000";
+        return null;
+      case "pay_date":
+        const date = new Date(value);
+        const today = new Date();
+        // Allow pay_date to be in the future
+        return null;
+      default:
+        return null;
+    }
+  };
 
-  const fields = [
-    { name: "employeeName", label: "Employee Name", type: "text" as const },
-    { name: "salary", label: "Salary (Rp)", type: "number" as const },
+    const fields = [
+    {
+      name: "employeeName",
+      label: "Employee Name",
+      type: "text" as const,
+      required: true,
+      placeholder: "Enter employee name",
+      validate: (value: string) => validateField("employeeName", value),
+    },
+    {
+      name: "salary",
+      label: "Salary (Rp)",
+      type: "number" as const,
+      required: true,
+      min: 1,
+      placeholder: "Enter salary",
+      validate: (value: number) => validateField("salary", value),
+    },
+    {
+      name: "pay_date",
+      label: "Pay Date",
+      type: "date" as const,
+      required: true,
+      placeholder: "Enter date",
+      validate: (value: string) => validateField("pay_date", value),
+    },
   ];
 
-  // Format the payDate value to conform with "yyyy-MM-dd" or fallback if invalid.
-  const formattedPayroll: PayrollData = {
-    ...editPayroll,
-    payDate: formatDate(editPayroll.payDate),
+const handleSubmit = async () => {
+    const errors = fields
+      .map((field) => ({
+        field: field.name,
+        error: validateField(
+          field.name as keyof PayrollData,
+          editPayroll[field.name as keyof PayrollData]
+        ),
+      }))
+      .filter((result) => result.error !== null);
+
+    if (errors.length > 0) {
+      console.error("Validation errors:", errors);
+      return;
+    }
+
+    // Format the pay_date to "yyyy-MM-dd"
+    let formattedDate = new Date().toISOString().split("T")[0]; // Default to today's date
+    if (editPayroll.pay_date) {
+      const date = new Date(editPayroll.pay_date);
+      if (!isNaN(date.getTime())) {
+        formattedDate = editPayroll.pay_date.split("T")[0];
+      }
+    }
+
+    const formattedPayroll = { ...editPayroll, pay_date: formattedDate };
+
+    setEditPayroll(formattedPayroll);
+    onSubmit();
   };
 
   return (
@@ -55,9 +110,9 @@ export function EditPayrollDialog({
       onOpenChange={onOpenChange}
       title="Edit Payroll"
       fields={fields}
-      editData={formattedPayroll}
+      editData={editPayroll}
       setEditData={setEditPayroll}
-      onSubmit={onSubmit}
+      onSubmit={handleSubmit}
     />
   );
 }

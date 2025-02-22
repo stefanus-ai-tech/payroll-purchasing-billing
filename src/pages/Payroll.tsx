@@ -18,7 +18,7 @@ type Employee = {
   position: string;
   salary: number;
   status: "Pending" | "Processed";
-  payDate?: string; // Add optional payDate
+  created_at: string;
 };
 
 export default function Payroll() {
@@ -32,37 +32,14 @@ export default function Payroll() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [payrollToEdit, setPayrollToEdit] = useState<Employee | null>(null);
   const [payrollToDelete, setPayrollToDelete] = useState<Employee | null>(null);
-  const [newEmployee, setNewEmployee] = useState({
-    name: "",
-    position: "",
-    salary: 0, // Initialize as number
-  });
+    const [newEmployee, setNewEmployee] = useState({
+        name: "",
+        position: "",
+        salary: 0,
+    });
 
-  // Fetch payDate when edit dialog is opened
-  useEffect(() => {
-    if (isEditOpen && payrollToEdit) {
-      const fetchPayDate = async () => {
-        const { data, error } = await supabase
-          .from('employees')
-          .select('created_at')
-          .eq('id', payrollToEdit.id)
-          .single();
-
-        if (error) {
-          console.error("Error fetching pay date:", error);
-        }
-
-        if (data) {
-          setPayrollToEdit((prev) => ({ ...prev, payDate: data.created_at }));
-        }
-      };
-
-      fetchPayDate();
-    }
-  }, [isEditOpen, payrollToEdit]);
-
-  // Subscribe to realtime changes
-  useEffect(() => {
+    // Subscribe to realtime changes
+    useEffect(() => {
     const channel = supabase
       .channel('employees-changes')
       .on(
@@ -191,8 +168,8 @@ export default function Payroll() {
         name: updatedEmployee.name,
         position: updatedEmployee.position,
         salary: updatedEmployee.salary,
-        pay_date: updatedEmployee.payDate,
-        status: updatedEmployee.status, // Keep existing status
+        created_at: updatedEmployee.created_at,
+        status: updatedEmployee.status,
       }).eq("id", updatedEmployee.id);
 
       if (error) throw error;
@@ -416,32 +393,29 @@ export default function Payroll() {
         isOpen={isEditOpen}
         onOpenChange={setIsEditOpen}
         editPayroll={
-          payrollToEdit
-            ? {
-                employeeName: payrollToEdit.name,
-                salary: payrollToEdit.salary,
-                payDate: payrollToEdit.payDate || "2024-01-01", // Use fetched payDate or a placeholder
-              }
-            : { employeeName: "", salary: 0, payDate: "" }
+          payrollToEdit ? {
+            employeeName: payrollToEdit.name,
+            salary: payrollToEdit.salary,
+            pay_date: payrollToEdit.created_at,
+          } : { employeeName: "", salary: 0, pay_date: "" }
+
         }
         setEditPayroll={(updatedPayroll) => {
+
           if (payrollToEdit) {
             setPayrollToEdit({
               ...payrollToEdit,
               name: updatedPayroll.employeeName,
               salary: updatedPayroll.salary,
-              payDate: updatedPayroll.payDate, // Include payDate
+              created_at: updatedPayroll.pay_date,
             });
           }
         }}
         onSubmit={() => {
           if (payrollToEdit) {
-            editEmployee.mutate({
-              ...payrollToEdit, // Send the complete employee object, including payDate if available
-            });
+            editEmployee.mutate({ ...payrollToEdit })
           }
-        }}
-      />
+        }} />
 
       {/* Delete Employee Dialog */}
       <DeletePayrollDialog
