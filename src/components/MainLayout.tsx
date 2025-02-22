@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,11 @@ const navigation = [
   { name: "Billing", href: "/billing", icon: Receipt },
 ];
 
-export default function MainLayout({ children }: { children: React.ReactNode }) {
+export default function MainLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
@@ -42,7 +45,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         )}
       >
         <div className="flex h-16 items-center justify-center border-b">
-          <h1 className="text-xl font-semibold text-primary">IIS Admin</h1>
+          <h1 className="text-xl font-semibold text-primary">Admin</h1>
         </div>
         <nav className="mt-8 px-4 space-y-2">
           {navigation.map((item) => {
@@ -69,9 +72,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
       {/* Main Content */}
       <div className="lg:pl-64">
-        <main className="min-h-screen p-8 animate-fade-in">
-          {children}
-        </main>
+        <main className="min-h-screen p-8 animate-fade-in">{children}</main>
       </div>
 
       {/* Mobile Sidebar Overlay */}
