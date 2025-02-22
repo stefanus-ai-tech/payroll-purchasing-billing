@@ -24,7 +24,7 @@ const invoices = [{
 }];
 export default function Billing() {
   return <MainLayout>
-      <div className="space-y-8 animate-fade-up px-0">
+      <div className="space-y-8 animate-fade-up px-0 my-[44px]">
         <div className="flex justify-between items-center">
           <div>
             <h2 className="text-3xl font-bold tracking-tight">Billing</h2>
