@@ -1,45 +1,30 @@
-
 import MainLayout from "@/components/MainLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-
-const invoices = [
-  {
-    id: "INV001",
-    client: "Tech Solutions Inc",
-    amount: "Rp 25,000,000",
-    dueDate: "2024-03-15",
-    status: "Paid",
-  },
-  {
-    id: "INV002",
-    client: "Marketing Pro",
-    amount: "Rp 15,000,000",
-    dueDate: "2024-03-20",
-    status: "Pending",
-  },
-  {
-    id: "INV003",
-    client: "Design Studio",
-    amount: "Rp 8,000,000",
-    dueDate: "2024-03-25",
-    status: "Overdue",
-  },
-];
-
+const invoices = [{
+  id: "INV001",
+  client: "Tech Solutions Inc",
+  amount: "Rp 25,000,000",
+  dueDate: "2024-03-15",
+  status: "Paid"
+}, {
+  id: "INV002",
+  client: "Marketing Pro",
+  amount: "Rp 15,000,000",
+  dueDate: "2024-03-20",
+  status: "Pending"
+}, {
+  id: "INV003",
+  client: "Design Studio",
+  amount: "Rp 8,000,000",
+  dueDate: "2024-03-25",
+  status: "Overdue"
+}];
 export default function Billing() {
-  return (
-    <MainLayout>
-      <div className="space-y-8 animate-fade-up">
+  return <MainLayout>
+      <div className="space-y-8 animate-fade-up px-0">
         <div className="flex justify-between items-center">
           <div>
             <h2 className="text-3xl font-bold tracking-tight">Billing</h2>
@@ -63,34 +48,23 @@ export default function Billing() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {invoices.map((invoice) => (
-                <TableRow key={invoice.id}>
+              {invoices.map(invoice => <TableRow key={invoice.id}>
                   <TableCell className="font-medium">{invoice.id}</TableCell>
                   <TableCell>{invoice.client}</TableCell>
                   <TableCell>{invoice.amount}</TableCell>
                   <TableCell>{invoice.dueDate}</TableCell>
                   <TableCell>
-                    <Badge
-                      variant={
-                        invoice.status === "Paid"
-                          ? "default"
-                          : invoice.status === "Overdue"
-                          ? "destructive"
-                          : "secondary"
-                      }
-                    >
+                    <Badge variant={invoice.status === "Paid" ? "default" : invoice.status === "Overdue" ? "destructive" : "secondary"}>
                       {invoice.status}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost">View Details</Button>
                   </TableCell>
-                </TableRow>
-              ))}
+                </TableRow>)}
             </TableBody>
           </Table>
         </Card>
       </div>
-    </MainLayout>
-  );
+    </MainLayout>;
 }
