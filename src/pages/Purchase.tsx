@@ -170,6 +170,7 @@ export default function Purchase() {
           requester: updatedRequest.requester,
           items: updatedRequest.items,
           amount: updatedRequest.amount,
+          created_at: updatedRequest.requestDate,
           status: "Pending", // or keep existing status?
         })
         .eq("id", updatedRequest.id);

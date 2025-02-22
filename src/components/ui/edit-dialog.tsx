@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,7 @@ interface EditDialogProps<T> {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
+  description?: string; // Optional description
   fields: {
     name: string;
     label: string;
@@ -22,6 +23,7 @@ export function EditDialog<T extends object>({
   isOpen,
   onOpenChange,
   title,
+  description,
   fields,
   editData,
   setEditData,
@@ -32,6 +34,7 @@ export function EditDialog<T extends object>({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
+          {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
         <div className="space-y-4 py-4">
           {fields.map((field) => (

@@ -63,14 +63,6 @@ export function EditPurchaseDialog({
       placeholder: "Enter quantity",
       validate: (value: number) => validateField("quantity", value),
     },
-    {
-      name: "requestDate",
-      label: "Request Date",
-      type: "date" as const,
-      required: true,
-      min: new Date().toISOString().split("T")[0],
-      validate: (value: string) => validateField("requestDate", value),
-    },
   ];
 
   const handleSubmit = async () => {

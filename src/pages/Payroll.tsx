@@ -191,6 +191,7 @@ export default function Payroll() {
         name: updatedEmployee.name,
         position: updatedEmployee.position,
         salary: updatedEmployee.salary,
+        pay_date: updatedEmployee.payDate,
         status: updatedEmployee.status, // Keep existing status
       }).eq("id", updatedEmployee.id);
 

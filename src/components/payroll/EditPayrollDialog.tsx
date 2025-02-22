@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { EditDialog } from "@/components/ui/edit-dialog";
 
 interface PayrollData {
@@ -14,6 +15,19 @@ interface EditPayrollDialogProps {
   onSubmit: () => void;
 }
 
+/**
+ * Cleans a date string by trimming extra fractional seconds beyond milliseconds,
+ * then returns a formatted string "yyyy-MM-dd".
+ * If the date is invalid, it returns an empty string.
+ */
+const formatDate = (dateString: string): string => {
+  // Remove extra fractional digits if present (keep only up to 3 digits for milliseconds)
+  const cleaned = dateString.replace(/\.(\d{3})\d+/, ".$1");
+  const date = new Date(cleaned);
+  if (isNaN(date.getTime())) return "";
+  return date.toISOString().split("T")[0];
+};
+
 export function EditPayrollDialog({
   isOpen,
   onOpenChange,
@@ -21,11 +35,19 @@ export function EditPayrollDialog({
   setEditPayroll,
   onSubmit,
 }: EditPayrollDialogProps) {
+  // Generate a unique ID for the description element
+  const descriptionId = useId();
+
   const fields = [
     { name: "employeeName", label: "Employee Name", type: "text" as const },
     { name: "salary", label: "Salary (Rp)", type: "number" as const },
-    { name: "payDate", label: "Pay Date", type: "date" as const },
   ];
+
+  // Format the payDate value to conform with "yyyy-MM-dd" or fallback if invalid.
+  const formattedPayroll: PayrollData = {
+    ...editPayroll,
+    payDate: formatDate(editPayroll.payDate),
+  };
 
   return (
     <EditDialog
@@ -33,7 +55,7 @@ export function EditPayrollDialog({
       onOpenChange={onOpenChange}
       title="Edit Payroll"
       fields={fields}
-      editData={editPayroll}
+      editData={formattedPayroll}
       setEditData={setEditPayroll}
       onSubmit={onSubmit}
     />
