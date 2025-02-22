@@ -9,7 +9,93 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      employees: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          position: string
+          salary: number
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          position: string
+          salary: number
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          position?: string
+          salary?: number
+          status?: string | null
+        }
+        Relationships: []
+      }
+      invoices: {
+        Row: {
+          amount: number
+          client: string
+          created_at: string
+          due_date: string
+          id: string
+          invoice_id: string
+          status: string | null
+        }
+        Insert: {
+          amount: number
+          client: string
+          created_at?: string
+          due_date: string
+          id?: string
+          invoice_id: string
+          status?: string | null
+        }
+        Update: {
+          amount?: number
+          client?: string
+          created_at?: string
+          due_date?: string
+          id?: string
+          invoice_id?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
+      purchase_requests: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          items: string
+          request_id: string
+          requester: string
+          status: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          items: string
+          request_id: string
+          requester: string
+          status?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          items?: string
+          request_id?: string
+          requester?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
