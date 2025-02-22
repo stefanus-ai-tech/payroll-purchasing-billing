@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/MainLayout";
 import { Card } from "@/components/ui/card";
@@ -19,6 +18,7 @@ type Employee = {
   position: string;
   salary: number;
   status: "Pending" | "Processed";
+  payDate?: string; // Add optional payDate
 };
 
 export default function Payroll() {
@@ -35,8 +35,31 @@ export default function Payroll() {
   const [newEmployee, setNewEmployee] = useState({
     name: "",
     position: "",
-    salary: ""
+    salary: 0, // Initialize as number
   });
+
+  // Fetch payDate when edit dialog is opened
+  useEffect(() => {
+    if (isEditOpen && payrollToEdit) {
+      const fetchPayDate = async () => {
+        const { data, error } = await supabase
+          .from('employees')
+          .select('created_at')
+          .eq('id', payrollToEdit.id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching pay date:", error);
+        }
+
+        if (data) {
+          setPayrollToEdit((prev) => ({ ...prev, payDate: data.created_at }));
+        }
+      };
+
+      fetchPayDate();
+    }
+  }, [isEditOpen, payrollToEdit]);
 
   // Subscribe to realtime changes
   useEffect(() => {
@@ -47,10 +70,9 @@ export default function Payroll() {
         {
           event: '*',
           schema: 'public',
-          table: 'employees'
+          table: 'employees',
         },
         () => {
-          // Invalidate and refetch when we get any changes
           queryClient.invalidateQueries({ queryKey: ['employees'] });
         }
       )
@@ -72,27 +94,25 @@ export default function Payroll() {
 
       if (error) throw error;
       return data as Employee[];
-    }
+    },
   });
 
   // Create employee
   const createEmployee = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
-        .from("employees")
-        .insert({
-          name: newEmployee.name,
-          position: newEmployee.position,
-          salary: parseFloat(newEmployee.salary),
-          status: "Pending"
-        });
-      
+      const { error } = await supabase.from("employees").insert({
+        name: newEmployee.name,
+        position: newEmployee.position,
+        salary: newEmployee.salary,
+        status: "Pending",
+      });
+
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
       setIsCreateOpen(false);
-      setNewEmployee({ name: "", position: "", salary: "" });
+      setNewEmployee({ name: "", position: "", salary: 0 });
       toast({
         title: "Success",
         description: "Employee added successfully",
@@ -104,7 +124,7 @@ export default function Payroll() {
         description: "Failed to add employee: " + error.message,
         variant: "destructive",
       });
-    }
+    },
   });
 
   // Process single employee payroll
@@ -114,7 +134,7 @@ export default function Payroll() {
         .from("employees")
         .update({ status: "Processed" })
         .eq("id", employeeId);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
@@ -132,7 +152,7 @@ export default function Payroll() {
         description: "Failed to process payroll: " + error.message,
         variant: "destructive",
       });
-    }
+    },
   });
 
   // Process all pending payrolls
@@ -143,7 +163,7 @@ export default function Payroll() {
         .from("employees")
         .update({ status: "Processed" })
         .eq("status", "Pending");
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
@@ -161,22 +181,19 @@ export default function Payroll() {
         variant: "destructive",
       });
       setProcessingAll(false);
-    }
+    },
   });
 
   // Edit employee
   const editEmployee = useMutation({
     mutationFn: async (updatedEmployee: Employee) => {
-      const { error } = await supabase
-        .from("employees")
-        .update({
-          name: updatedEmployee.name,
-          position: updatedEmployee.position,
-          salary: updatedEmployee.salary,
-          status: "Pending" // or keep the existing status?
-        })
-        .eq("id", updatedEmployee.id);
-      
+      const { error } = await supabase.from("employees").update({
+        name: updatedEmployee.name,
+        position: updatedEmployee.position,
+        salary: updatedEmployee.salary,
+        status: updatedEmployee.status, // Keep existing status
+      }).eq("id", updatedEmployee.id);
+
       if (error) throw error;
     },
     onSuccess: () => {
@@ -194,17 +211,14 @@ export default function Payroll() {
         description: "Failed to update employee: " + error.message,
         variant: "destructive",
       });
-    }
+    },
   });
 
   // Delete employee
   const deleteEmployee = useMutation({
     mutationFn: async (employeeId: string) => {
-      const { error } = await supabase
-        .from("employees")
-        .delete()
-        .eq("id", employeeId);
-      
+      const { error } = await supabase.from("employees").delete().eq("id", employeeId);
+
       if (error) throw error;
     },
     onSuccess: () => {
@@ -222,216 +236,223 @@ export default function Payroll() {
         description: "Failed to delete employee: " + error.message,
         variant: "destructive",
       });
-    }
+    },
   });
 
-
   if (isLoading) {
-    return <MainLayout>
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    </MainLayout>;
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-screen">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        </div>
+      </MainLayout>
+    );
   }
 
-  return <MainLayout>
-    <div className="space-y-8 animate-fade-up my-[44px]">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Payroll</h2>
-          <p className="text-muted-foreground">
-            Manage employee salaries and payments
-          </p>
+  return (
+    <MainLayout>
+      <div className="space-y-8 animate-fade-up my-[44px]">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">Payroll</h2>
+            <p className="text-muted-foreground">Manage employee salaries and payments</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => setIsCreateOpen(true)}>Add Employee</Button>
+            <Button
+              onClick={() => processAllPayroll.mutate()}
+              disabled={processingAll || !employees.some((e) => e.status === "Pending")}
+            >
+              Process All Pending
+            </Button>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={() => setIsCreateOpen(true)}>Add Employee</Button>
-          <Button 
-            onClick={() => processAllPayroll.mutate()}
-            disabled={processingAll || !employees.some(e => e.status === "Pending")}
-          >
-            Process All Pending
-          </Button>
-        </div>
-      </div>
 
-      <div className="overflow-auto">
-        <Card className="min-w-full">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Employee</TableHead>
-                <TableHead>Position</TableHead>
-                <TableHead>Salary</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {employees.map(employee => (
-                <TableRow key={employee.id}>
-                  <TableCell className="font-medium whitespace-nowrap">{employee.name}</TableCell>
-                  <TableCell className="whitespace-nowrap">{employee.position}</TableCell>
-                  <TableCell className="whitespace-nowrap">Rp {employee.salary.toLocaleString()}</TableCell>
-                  <TableCell className="whitespace-nowrap">{employee.status}</TableCell>
-                  <TableCell className="text-right whitespace-nowrap">
-                    <Button 
-                      variant="ghost"
-                      onClick={() => {
-                        setSelectedEmployee(employee);
-                        setIsViewOpen(true);
-                      }}
-                    >
-                      View Details
-                    </Button>
-                    <Button 
-                      variant="ghost"
-                      onClick={() => {
-                        setPayrollToEdit(employee);
-                        setIsEditOpen(true);
-                      }}
-                    >
-                      Edit
-                    </Button>
-                    <Button 
-                      variant="ghost"
-                      onClick={() => {
-                        setPayrollToDelete(employee);
-                        setIsDeleteOpen(true);
-                      }}
-                    >
-                      Delete
-                    </Button>
-                  </TableCell>
+        <div className="overflow-auto">
+          <Card className="min-w-full">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Employee</TableHead>
+                  <TableHead>Position</TableHead>
+                  <TableHead>Salary</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+              </TableHeader>
+              <TableBody>
+                {employees.map((employee) => (
+                  <TableRow key={employee.id}>
+                    <TableCell className="font-medium whitespace-nowrap">{employee.name}</TableCell>
+                    <TableCell className="whitespace-nowrap">{employee.position}</TableCell>
+                    <TableCell className="whitespace-nowrap">Rp {employee.salary.toLocaleString()}</TableCell>
+                    <TableCell className="whitespace-nowrap">{employee.status}</TableCell>
+                    <TableCell className="text-right whitespace-nowrap">
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          setSelectedEmployee(employee);
+                          setIsViewOpen(true);
+                        }}
+                      >
+                        View Details
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          setPayrollToEdit(employee);
+                          setIsEditOpen(true);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          setPayrollToDelete(employee);
+                          setIsDeleteOpen(true);
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        </div>
       </div>
-    </div>
 
-    {/* Create Employee Dialog */}
-    <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Add New Employee</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Employee Name</Label>
-            <Input
-              id="name"
-              value={newEmployee.name}
-              onChange={(e) => setNewEmployee(prev => ({ ...prev, name: e.target.value }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="position">Position</Label>
-            <Input
-              id="position"
-              value={newEmployee.position}
-              onChange={(e) => setNewEmployee(prev => ({ ...prev, position: e.target.value }))}
-            />
-          </div>
+      {/* Create Employee Dialog */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add New Employee</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Employee Name</Label>
+              <Input
+                id="name"
+                value={newEmployee.name}
+                onChange={(e) => setNewEmployee((prev) => ({ ...prev, name: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="position">Position</Label>
+              <Input
+                id="position"
+                value={newEmployee.position}
+                onChange={(e) => setNewEmployee((prev) => ({ ...prev, position: e.target.value }))}
+              />
+            </div>
           <div className="space-y-2">
             <Label htmlFor="salary">Salary (Rp)</Label>
             <Input
               id="salary"
               type="number"
               value={newEmployee.salary}
-              onChange={(e) => setNewEmployee(prev => ({ ...prev, salary: e.target.value }))}
+              onChange={(e) => setNewEmployee((prev) => ({ ...prev, salary: parseFloat(e.target.value || "0") }))}
             />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-          <Button 
-            onClick={() => createEmployee.mutate()}
-            disabled={!newEmployee.name || !newEmployee.position || !newEmployee.salary}
-          >
-            Add Employee
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => createEmployee.mutate()}
+              disabled={!newEmployee.name || !newEmployee.position || !newEmployee.salary}
+            >
+              Add Employee
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-    {/* View Employee Dialog */}
-    <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Employee Details</DialogTitle>
-        </DialogHeader>
-        {selectedEmployee && (
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Name</Label>
-                <p className="font-medium">{selectedEmployee.name}</p>
+      {/* View Employee Dialog */}
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Employee Details</DialogTitle>
+          </DialogHeader>
+          {selectedEmployee && (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Name</Label>
+                  <p className="font-medium">{selectedEmployee.name}</p>
+                </div>
+                <div>
+                  <Label>Position</Label>
+                  <p className="font-medium">{selectedEmployee.position}</p>
+                </div>
+                <div>
+                  <Label>Salary</Label>
+                  <p className="font-medium">Rp {selectedEmployee.salary.toLocaleString()}</p>
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <p className="font-medium">{selectedEmployee.status}</p>
+                </div>
               </div>
-              <div>
-                <Label>Position</Label>
-                <p className="font-medium">{selectedEmployee.position}</p>
-              </div>
-              <div>
-                <Label>Salary</Label>
-                <p className="font-medium">Rp {selectedEmployee.salary.toLocaleString()}</p>
-              </div>
-              <div>
-                <Label>Status</Label>
-                <p className="font-medium">{selectedEmployee.status}</p>
+              <div className="flex gap-2 mt-4">
+                <Button
+                  disabled={selectedEmployee.status === "Processed"}
+                  onClick={() => processSinglePayroll.mutate(selectedEmployee.id)}
+                >
+                  Process Payroll
+                </Button>
               </div>
             </div>
-            <div className="flex gap-2 mt-4">
-              <Button
-                disabled={selectedEmployee.status === "Processed"}
-                onClick={() => processSinglePayroll.mutate(selectedEmployee.id)}
-              >
-                Process Payroll
-              </Button>
-            </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+          )}
+        </DialogContent>
+      </Dialog>
 
-    {/* Edit Employee Dialog */}
-    <EditPayrollDialog 
-      isOpen={isEditOpen}
-      onOpenChange={setIsEditOpen}
-      editPayroll={
-        payrollToEdit ? {
-          employeeName: payrollToEdit.name,
-          salary: String(payrollToEdit.salary),
-          payDate: "2024-01-01" // Placeholder date, needs to be handled properly
-        } : { employeeName: "", salary: "", payDate: "" }
-      }
-      setEditPayroll={(updatedPayroll) => {
-        if (payrollToEdit) {
-          setPayrollToEdit({
-            ...payrollToEdit,
-            name: updatedPayroll.employeeName,
-            salary: parseFloat(updatedPayroll.salary),
-            // No direct mapping for payDate, needs to be handled
-          });
+      {/* Edit Employee Dialog */}
+      <EditPayrollDialog
+        isOpen={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        editPayroll={
+          payrollToEdit
+            ? {
+                employeeName: payrollToEdit.name,
+                salary: payrollToEdit.salary,
+                payDate: payrollToEdit.payDate || "2024-01-01", // Use fetched payDate or a placeholder
+              }
+            : { employeeName: "", salary: 0, payDate: "" }
         }
-      }}
-      onSubmit={() => {
-        if (payrollToEdit) {
-          editEmployee.mutate(payrollToEdit);
-        }
-      }}
-    />
+        setEditPayroll={(updatedPayroll) => {
+          if (payrollToEdit) {
+            setPayrollToEdit({
+              ...payrollToEdit,
+              name: updatedPayroll.employeeName,
+              salary: updatedPayroll.salary,
+              payDate: updatedPayroll.payDate, // Include payDate
+            });
+          }
+        }}
+        onSubmit={() => {
+          if (payrollToEdit) {
+            editEmployee.mutate({
+              ...payrollToEdit, // Send the complete employee object, including payDate if available
+            });
+          }
+        }}
+      />
 
-    {/* Delete Employee Dialog */}
-    <DeletePayrollDialog 
-      isOpen={isDeleteOpen}
-      onOpenChange={setIsDeleteOpen}
-      payroll={payrollToDelete}
-      onConfirm={() => {
-        if (payrollToDelete) {
-          deleteEmployee.mutate(payrollToDelete.id);
-        }
-      }}
-    />
-  </MainLayout>;
+      {/* Delete Employee Dialog */}
+      <DeletePayrollDialog
+        isOpen={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        payroll={payrollToDelete}
+        onConfirm={() => {
+          if (payrollToDelete) {
+            deleteEmployee.mutate(payrollToDelete.id);
+          }
+        }}
+      />
+    </MainLayout>
+  );
 }

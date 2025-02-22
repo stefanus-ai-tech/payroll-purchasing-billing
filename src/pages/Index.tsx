@@ -1,6 +1,8 @@
 import { Card } from "@/components/ui/card";
 import MainLayout from "@/components/MainLayout";
 import { UserRound, ClipboardCheck, Receipt, TrendingUp } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 const stats = [{
   name: "Pending Payroll",
   value: "25",
@@ -23,6 +25,122 @@ const stats = [{
   icon: TrendingUp
 }];
 export default function Dashboard() {
+  const [pendingPayroll, setPendingPayroll] = useState<number | null>(null);
+  const [pendingPurchases, setPendingPurchases] = useState<number | null>(null);
+  const [outstandingBills, setOutstandingBills] = useState<number | null>(null);
+  const [monthRevenue, setMonthRevenue] = useState<number | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data: payrollData, error: payrollError, count: payrollCount } = await supabase
+          .from('employees')
+          .select('*', { count: 'exact' })
+          .eq('status', 'pending');
+
+        if (payrollError) {
+          throw payrollError;
+        }
+
+        if (payrollCount !== null) {
+          setPendingPayroll(payrollCount);
+        }
+
+        const { data: purchaseData, error: purchaseError, count: purchaseCount } = await supabase
+          .from('purchase_requests')
+          .select('*', { count: 'exact' })
+          .eq('status', 'pending');
+
+        if (purchaseError) {
+          throw purchaseError;
+        }
+
+        if (purchaseCount !== null) {
+          setPendingPurchases(purchaseCount);
+        }
+
+        const { data: invoicesData, error: invoicesError, count: invoicesCount } = await supabase
+          .from('invoices')
+          .select('*', { count: 'exact' })
+          .eq('status', 'unpaid'); // Assuming 'unpaid' status for outstanding bills
+
+        if (invoicesError) {
+          throw invoicesError;
+        }
+
+        if (invoicesCount !== null) {
+          setOutstandingBills(invoicesCount);
+        }
+
+        // Fetch and calculate Month Revenue
+        const { data: monthRevenueData, error: monthRevenueError } = await supabase
+          .from('invoices')
+          .select('amount, created_at');
+
+        if (monthRevenueError) {
+          throw monthRevenueError;
+        }
+
+        const currentDate = new Date();
+        const currentMonth = currentDate.getMonth();
+        const currentYear = currentDate.getFullYear();
+
+        const currentMonthInvoices = monthRevenueData?.filter(invoice => {
+          const invoiceDate = new Date(invoice.created_at);
+          return invoiceDate.getMonth() === currentMonth && invoiceDate.getFullYear() === currentYear;
+        }) || [];
+
+        const totalRevenue = currentMonthInvoices.reduce((sum, invoice) => sum + invoice.amount, 0);
+        setMonthRevenue(totalRevenue);
+
+      } catch (error: any) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const updatedStats = stats.map(stat => {
+    if (stat.name === "Pending Payroll") {
+      return {
+        ...stat,
+        value: pendingPayroll === null ? "N/A" : pendingPayroll.toString(),
+      };
+    }
+    if (stat.name === "Purchase Requests") {
+      return {
+        ...stat,
+        value: pendingPurchases === null ? "N/A" : pendingPurchases.toString(),
+      };
+    }
+    if (stat.name === "Outstanding Bills") {
+      return {
+        ...stat,
+        value: outstandingBills === null ? "N/A" : outstandingBills.toString(),
+      };
+    }
+    if (stat.name === "Month Revenue") {
+      return {
+        ...stat,
+        value: monthRevenue === null ? "N/A" : `Rp ${monthRevenue.toLocaleString()}`, // Format as currency
+      };
+    }
+    return stat;
+  });
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (error) {
+    return <p>Error: {error}</p>;
+  }
+
   return <MainLayout>
       <div className="space-y-8 animate-fade-up my-[44px]">
         <div>
@@ -33,7 +151,7 @@ export default function Dashboard() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {stats.map(stat => <Card key={stat.name} className="p-6 hover:shadow-lg transition-shadow space-y-2">
+          {updatedStats.map(stat => <Card key={stat.name} className="p-6 hover:shadow-lg transition-shadow space-y-2">
               <div className="flex items-center gap-2">
                 <stat.icon className="h-4 w-4 text-muted-foreground" />
                 <h3 className="text-sm font-medium text-muted-foreground">

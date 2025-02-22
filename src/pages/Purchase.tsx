@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MainLayout from "@/components/MainLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,7 @@ type PurchaseRequest = {
   items: string;
   amount: number;
   status: "Pending" | "Approved" | "Rejected";
+  requestDate?: string;
 };
 
 export default function Purchase() {
@@ -53,8 +54,31 @@ export default function Purchase() {
   const [newRequest, setNewRequest] = useState({
     requester: "",
     items: "",
-    amount: "",
+    amount: 0,
   });
+
+    // Fetch requestDate when the edit dialog is opened
+  useEffect(() => {
+    if (isEditOpen && purchaseToEdit) {
+      const fetchRequestDate = async () => {
+        const { data, error } = await supabase
+          .from('purchase_requests')
+          .select('created_at')
+          .eq('id', purchaseToEdit.id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching request date:", error);
+        }
+
+        if (data) {
+          setPurchaseToEdit((prev) => ({ ...prev, requestDate: data.created_at }));
+        }
+      };
+
+      fetchRequestDate();
+    }
+  }, [isEditOpen, purchaseToEdit]);
 
   // Fetch purchase requests
   const { data: requests = [], isLoading } = useQuery({
@@ -82,7 +106,7 @@ export default function Purchase() {
         request_id: requestId,
         requester: newRequest.requester,
         items: newRequest.items,
-        amount: parseFloat(newRequest.amount),
+        amount: newRequest.amount,
         status: "Pending",
       });
 
@@ -91,7 +115,7 @@ export default function Purchase() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchase_requests"] });
       setIsCreateOpen(false);
-      setNewRequest({ requester: "", items: "", amount: "" });
+      setNewRequest({ requester: "", items: "", amount: 0 });
       toast({
         title: "Success",
         description: "Purchase request created successfully",
@@ -330,7 +354,7 @@ export default function Purchase() {
                 type="number"
                 value={newRequest.amount}
                 onChange={(e) =>
-                  setNewRequest((prev) => ({ ...prev, amount: e.target.value }))
+                  setNewRequest((prev) => ({ ...prev, amount: parseFloat(e.target.value || "0") }))
                 }
               />
             </div>
@@ -437,31 +461,33 @@ export default function Purchase() {
 
       {/* Edit Purchase Request Dialog */}
       <EditPurchaseDialog
-      isOpen={isEditOpen}
-      onOpenChange={setIsEditOpen}
-      editPurchase={
-        purchaseToEdit ? {
-          itemName: purchaseToEdit.items,
-          quantity: String(purchaseToEdit.amount),
-          requestDate: purchaseToEdit.request_id // Assuming request_id can be used as requestDate
-        } : { itemName: "", quantity: "", requestDate: "" }
-      }
-      setEditPurchase={(updatedPurchase) => {
-        if (purchaseToEdit) {
-          setPurchaseToEdit({
-            ...purchaseToEdit,
-            items: updatedPurchase.itemName,
-            amount: parseFloat(updatedPurchase.quantity),
-            request_id: updatedPurchase.requestDate,
-          });
+        isOpen={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        editPurchase={
+          purchaseToEdit
+            ? {
+                itemName: purchaseToEdit.items,
+                quantity: purchaseToEdit.amount,
+                requestDate: purchaseToEdit.requestDate || "", // Use fetched requestDate
+              }
+            : { itemName: "", quantity: 0, requestDate: "" }
         }
-      }}
-      onSubmit={() => {
-        if (purchaseToEdit) {
-          editPurchaseRequest.mutate(purchaseToEdit);
-        }
-      }}
-    />
+        setEditPurchase={(updatedPurchase) => {
+          if (purchaseToEdit) {
+            setPurchaseToEdit({
+              ...purchaseToEdit,
+              items: updatedPurchase.itemName,
+              amount: updatedPurchase.quantity,
+              requestDate: updatedPurchase.requestDate,
+            });
+          }
+        }}
+        onSubmit={() => {
+          if (purchaseToEdit) {
+            editPurchaseRequest.mutate(purchaseToEdit);
+          }
+        }}
+      />
 
       {/* Delete Purchase Request Dialog */}
       <DeletePurchaseDialog

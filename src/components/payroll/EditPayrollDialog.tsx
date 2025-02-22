@@ -1,14 +1,16 @@
 import { EditDialog } from "@/components/ui/edit-dialog";
 
+interface PayrollData {
+  employeeName: string;
+  salary: number;
+  payDate: string;
+}
+
 interface EditPayrollDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  editPayroll: {
-    employeeName: string;
-    salary: string;
-    payDate: string;
-  };
-  setEditPayroll: (payroll: { employeeName: string; salary: string; payDate: string }) => void;
+  editPayroll: PayrollData;
+  setEditPayroll: (payroll: PayrollData) => void;
   onSubmit: () => void;
 }
 
@@ -17,12 +19,12 @@ export function EditPayrollDialog({
   onOpenChange,
   editPayroll,
   setEditPayroll,
-  onSubmit
+  onSubmit,
 }: EditPayrollDialogProps) {
   const fields = [
-    { name: 'employeeName', label: 'Employee Name', type: 'text' },
-    { name: 'salary', label: 'Salary (Rp)', type: 'number' },
-    { name: 'payDate', label: 'Pay Date', type: 'date' },
+    { name: "employeeName", label: "Employee Name", type: "text" as const },
+    { name: "salary", label: "Salary (Rp)", type: "number" as const },
+    { name: "payDate", label: "Pay Date", type: "date" as const },
   ];
 
   return (
