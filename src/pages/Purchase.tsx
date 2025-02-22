@@ -34,7 +34,7 @@ type PurchaseRequest = {
   items: string;
   amount: number;
   status: "Pending" | "Approved" | "Rejected";
-  requestDate?: string;
+  created_at: string;
 };
 
 export default function Purchase() {
@@ -49,39 +49,15 @@ export default function Purchase() {
   const [purchaseToEdit, setPurchaseToEdit] = useState<PurchaseRequest | null>(
     null
   );
-  const [purchaseToDelete, setPurchaseToDelete] =
-    useState<PurchaseRequest | null>(null);
-  const [newRequest, setNewRequest] = useState({
-    requester: "",
-    items: "",
-    amount: 0,
-  });
-
-    // Fetch requestDate when the edit dialog is opened
-  useEffect(() => {
-    if (isEditOpen && purchaseToEdit) {
-      const fetchRequestDate = async () => {
-        const { data, error } = await supabase
-          .from('purchase_requests')
-          .select('created_at')
-          .eq('id', purchaseToEdit.id)
-          .single();
-
-        if (error) {
-          console.error("Error fetching request date:", error);
-        }
-
-        if (data) {
-          setPurchaseToEdit((prev) => ({ ...prev, requestDate: data.created_at }));
-        }
-      };
-
-      fetchRequestDate();
-    }
-  }, [isEditOpen, purchaseToEdit]);
+  const [purchaseToDelete, setPurchaseToDelete] = useState<PurchaseRequest | null>(null);
+    const [newRequest, setNewRequest] = useState({
+        requester: "",
+        items: "",
+        amount: 0,
+    });
 
   // Fetch purchase requests
-  const { data: requests = [], isLoading } = useQuery({
+    const { data: requests = [], isLoading } = useQuery({
     queryKey: ["purchase_requests"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -170,7 +146,7 @@ export default function Purchase() {
           requester: updatedRequest.requester,
           items: updatedRequest.items,
           amount: updatedRequest.amount,
-          created_at: updatedRequest.requestDate,
+          created_at: updatedRequest.created_at,
           status: "Pending", // or keep existing status?
         })
         .eq("id", updatedRequest.id);
@@ -465,30 +441,28 @@ export default function Purchase() {
         isOpen={isEditOpen}
         onOpenChange={setIsEditOpen}
         editPurchase={
-          purchaseToEdit
-            ? {
-                itemName: purchaseToEdit.items,
-                quantity: purchaseToEdit.amount,
-                requestDate: purchaseToEdit.requestDate || "", // Use fetched requestDate
-              }
-            : { itemName: "", quantity: 0, requestDate: "" }
-        }
-        setEditPurchase={(updatedPurchase) => {
-          if (purchaseToEdit) {
-            setPurchaseToEdit({
-              ...purchaseToEdit,
-              items: updatedPurchase.itemName,
-              amount: updatedPurchase.quantity,
-              requestDate: updatedPurchase.requestDate,
-            });
-          }
-        }}
-        onSubmit={() => {
-          if (purchaseToEdit) {
-            editPurchaseRequest.mutate(purchaseToEdit);
-          }
-        }}
-      />
+                    purchaseToEdit ? {
+                        itemName: purchaseToEdit.items,
+                        quantity: purchaseToEdit.amount,
+                        created_at: purchaseToEdit.created_at
+                    } : { itemName: "", quantity: 0, created_at: "" }
+                }
+                setEditPurchase={(updatedPurchase) => {
+                    if (purchaseToEdit) {
+                        setPurchaseToEdit({
+                            ...purchaseToEdit,
+                            items: updatedPurchase.itemName,
+                            amount: updatedPurchase.quantity,
+                            created_at: updatedPurchase.created_at
+                        });
+                    }
+                }}
+                onSubmit={() => {
+                    if (purchaseToEdit) {
+                        editPurchaseRequest.mutate(purchaseToEdit);
+                    }
+                }}
+            />
 
       {/* Delete Purchase Request Dialog */}
       <DeletePurchaseDialog

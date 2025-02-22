@@ -1,9 +1,15 @@
+import { useState } from "react";
 import { EditDialog } from "@/components/ui/edit-dialog";
 
 interface PurchaseData {
   itemName: string;
   quantity: number;
-  requestDate: string;
+  created_at: string;
+}
+
+interface ValidationError {
+  field: keyof PurchaseData;
+  message: string;
 }
 
 interface EditPurchaseDialogProps {
@@ -21,6 +27,7 @@ export function EditPurchaseDialog({
   setEditPurchase,
   onSubmit,
 }: EditPurchaseDialogProps) {
+  // Validate each field based on its name and value
   const validateField = (
     name: keyof PurchaseData,
     value: any
@@ -33,12 +40,13 @@ export function EditPurchaseDialog({
         return null;
       case "quantity":
         if (value <= 0) return "Quantity must be greater than 0";
-        if (value > 1000000) return "Quantity must be less than 1,000,000";
+        if (value > 1000000000)
+          return "Quantity must be less than 1,000,000,000";
         return null;
-      case "requestDate":
+      case "created_at":
         const date = new Date(value);
         const today = new Date();
-        if (date < today) return "Request date cannot be in the past";
+        // Allow created_at to be in the future
         return null;
       default:
         return null;
@@ -56,21 +64,21 @@ export function EditPurchaseDialog({
     },
     {
       name: "quantity",
-      label: "Quantity",
+      label: "Amount",
       type: "number" as const,
       required: true,
       min: 1,
-      placeholder: "Enter quantity",
+      placeholder: "Enter Amoun",
       validate: (value: number) => validateField("quantity", value),
     },
     {
-      name: "requestDate",
-      label: "Request Date",
+      name: "created_at",
+      label: "Created At",
       type: "date" as const,
       required: true,
-      placeholder: "Enter request date",
-      validate: (value: string) => validateField("requestDate", value),
-    }
+      placeholder: "Enter date",
+      validate: (value: string) => validateField("created_at", value),
+    },
   ];
 
   const handleSubmit = async () => {
@@ -89,10 +97,16 @@ export function EditPurchaseDialog({
       return;
     }
 
-    // Format the requestDate to "yyyy-MM-dd"
-    const dateParts = editPurchase.requestDate.split("T")[0].split("-");
-    const formattedDate = `${dateParts[0]}-${dateParts[1]}-${dateParts[2]}`;
-    const formattedPurchase = { ...editPurchase, requestDate: formattedDate };
+    // Format the created_at to "yyyy-MM-dd"
+    let formattedDate = new Date().toISOString().split("T")[0]; // Default to today's date
+    if (editPurchase.created_at) {
+      const date = new Date(editPurchase.created_at);
+      if (!isNaN(date.getTime())) {
+        formattedDate = editPurchase.created_at.split("T")[0];
+      }
+    }
+
+    const formattedPurchase = { ...editPurchase, created_at: formattedDate };
 
     setEditPurchase(formattedPurchase);
     onSubmit();
