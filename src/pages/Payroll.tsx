@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { EditPayrollDialog } from "@/components/payroll/EditPayrollDialog";
+import { DeletePayrollDialog } from "@/components/payroll/DeletePayrollDialog";
 
 type Employee = {
   id: string;
@@ -25,7 +27,11 @@ export default function Payroll() {
   const [processingAll, setProcessingAll] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [payrollToEdit, setPayrollToEdit] = useState<Employee | null>(null);
+  const [payrollToDelete, setPayrollToDelete] = useState<Employee | null>(null);
   const [newEmployee, setNewEmployee] = useState({
     name: "",
     position: "",
@@ -158,6 +164,68 @@ export default function Payroll() {
     }
   });
 
+  // Edit employee
+  const editEmployee = useMutation({
+    mutationFn: async (updatedEmployee: Employee) => {
+      const { error } = await supabase
+        .from("employees")
+        .update({
+          name: updatedEmployee.name,
+          position: updatedEmployee.position,
+          salary: updatedEmployee.salary,
+          status: "Pending" // or keep the existing status?
+        })
+        .eq("id", updatedEmployee.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
+      setIsEditOpen(false);
+      setPayrollToEdit(null);
+      toast({
+        title: "Success",
+        description: "Employee updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update employee: " + error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Delete employee
+  const deleteEmployee = useMutation({
+    mutationFn: async (employeeId: string) => {
+      const { error } = await supabase
+        .from("employees")
+        .delete()
+        .eq("id", employeeId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
+      setIsDeleteOpen(false);
+      setPayrollToDelete(null);
+      toast({
+        title: "Success",
+        description: "Employee deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete employee: " + error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+
   if (isLoading) {
     return <MainLayout>
       <div className="flex items-center justify-center h-screen">
@@ -214,6 +282,24 @@ export default function Payroll() {
                       }}
                     >
                       View Details
+                    </Button>
+                    <Button 
+                      variant="ghost"
+                      onClick={() => {
+                        setPayrollToEdit(employee);
+                        setIsEditOpen(true);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button 
+                      variant="ghost"
+                      onClick={() => {
+                        setPayrollToDelete(employee);
+                        setIsDeleteOpen(true);
+                      }}
+                    >
+                      Delete
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -307,5 +393,45 @@ export default function Payroll() {
         )}
       </DialogContent>
     </Dialog>
+
+    {/* Edit Employee Dialog */}
+    <EditPayrollDialog 
+      isOpen={isEditOpen}
+      onOpenChange={setIsEditOpen}
+      editPayroll={
+        payrollToEdit ? {
+          employeeName: payrollToEdit.name,
+          salary: String(payrollToEdit.salary),
+          payDate: "2024-01-01" // Placeholder date, needs to be handled properly
+        } : { employeeName: "", salary: "", payDate: "" }
+      }
+      setEditPayroll={(updatedPayroll) => {
+        if (payrollToEdit) {
+          setPayrollToEdit({
+            ...payrollToEdit,
+            name: updatedPayroll.employeeName,
+            salary: parseFloat(updatedPayroll.salary),
+            // No direct mapping for payDate, needs to be handled
+          });
+        }
+      }}
+      onSubmit={() => {
+        if (payrollToEdit) {
+          editEmployee.mutate(payrollToEdit);
+        }
+      }}
+    />
+
+    {/* Delete Employee Dialog */}
+    <DeletePayrollDialog 
+      isOpen={isDeleteOpen}
+      onOpenChange={setIsDeleteOpen}
+      payroll={payrollToDelete}
+      onConfirm={() => {
+        if (payrollToDelete) {
+          deleteEmployee.mutate(payrollToDelete.id);
+        }
+      }}
+    />
   </MainLayout>;
 }
