@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import MainLayout from "@/components/MainLayout";
 import { Card } from "@/components/ui/card";
@@ -6,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -26,8 +26,15 @@ export default function Billing() {
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [newInvoice, setNewInvoice] = useState({
+    client: "",
+    amount: "",
+    due_date: ""
+  });
+  const [editInvoice, setEditInvoice] = useState({
     client: "",
     amount: "",
     due_date: ""
@@ -83,6 +90,67 @@ export default function Billing() {
     }
   });
 
+  // Update invoice
+  const updateInvoice = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("invoices")
+        .update({
+          client: editInvoice.client,
+          amount: parseFloat(editInvoice.amount),
+          due_date: editInvoice.due_date,
+        })
+        .eq("id", selectedInvoice?.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      setIsEditOpen(false);
+      setSelectedInvoice(null);
+      setEditInvoice({ client: "", amount: "", due_date: "" });
+      toast({
+        title: "Success",
+        description: "Invoice updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update invoice: " + error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Delete invoice
+  const deleteInvoice = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("invoices")
+        .delete()
+        .eq("id", selectedInvoice?.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      setIsDeleteOpen(false);
+      setSelectedInvoice(null);
+      toast({
+        title: "Success",
+        description: "Invoice deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete invoice: " + error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
   // Update invoice status
   const updateStatus = useMutation({
     mutationFn: async (params: { id: string; status: "Pending" | "Paid" | "Overdue" }) => {
@@ -132,39 +200,68 @@ export default function Billing() {
       </div>
 
       <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Invoice ID</TableHead>
-              <TableHead>Client</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Due Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {invoices.map(invoice => <TableRow key={invoice.id}>
-              <TableCell className="font-medium">{invoice.invoice_id}</TableCell>
-              <TableCell>{invoice.client}</TableCell>
-              <TableCell>Rp {invoice.amount.toLocaleString()}</TableCell>
-              <TableCell>{new Date(invoice.due_date).toLocaleDateString()}</TableCell>
-              <TableCell>
-                <Badge variant={invoice.status === "Paid" ? "default" : invoice.status === "Overdue" ? "destructive" : "secondary"}>
-                  {invoice.status}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-right">
-                <Button variant="ghost" onClick={() => {
-                  setSelectedInvoice(invoice);
-                  setIsViewOpen(true);
-                }}>
-                  View Details
-                </Button>
-              </TableCell>
-            </TableRow>)}
-          </TableBody>
-        </Table>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Invoice ID</TableHead>
+                <TableHead>Client</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Due Date</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {invoices.map(invoice => <TableRow key={invoice.id}>
+                <TableCell className="font-medium">{invoice.invoice_id}</TableCell>
+                <TableCell>{invoice.client}</TableCell>
+                <TableCell>Rp {invoice.amount.toLocaleString()}</TableCell>
+                <TableCell>{new Date(invoice.due_date).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <Badge variant={invoice.status === "Paid" ? "default" : invoice.status === "Overdue" ? "destructive" : "secondary"}>
+                    {invoice.status}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right space-x-2">
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => {
+                      setSelectedInvoice(invoice);
+                      setIsViewOpen(true);
+                    }}
+                  >
+                    View
+                  </Button>
+                  <Button 
+                    variant="ghost"
+                    onClick={() => {
+                      setSelectedInvoice(invoice);
+                      setEditInvoice({
+                        client: invoice.client,
+                        amount: invoice.amount.toString(),
+                        due_date: invoice.due_date
+                      });
+                      setIsEditOpen(true);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="text-red-500 hover:text-red-700"
+                    onClick={() => {
+                      setSelectedInvoice(invoice);
+                      setIsDeleteOpen(true);
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </TableCell>
+              </TableRow>)}
+            </TableBody>
+          </Table>
+        </div>
       </Card>
     </div>
 
@@ -213,6 +310,71 @@ export default function Billing() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    {/* Edit Invoice Dialog */}
+    <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit Invoice</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="edit-client">Client Name</Label>
+            <Input
+              id="edit-client"
+              value={editInvoice.client}
+              onChange={(e) => setEditInvoice(prev => ({ ...prev, client: e.target.value }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-amount">Amount (Rp)</Label>
+            <Input
+              id="edit-amount"
+              type="number"
+              value={editInvoice.amount}
+              onChange={(e) => setEditInvoice(prev => ({ ...prev, amount: e.target.value }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-dueDate">Due Date</Label>
+            <Input
+              id="edit-dueDate"
+              type="date"
+              value={editInvoice.due_date}
+              onChange={(e) => setEditInvoice(prev => ({ ...prev, due_date: e.target.value }))}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
+          <Button
+            onClick={() => updateInvoice.mutate()}
+            disabled={!editInvoice.client || !editInvoice.amount || !editInvoice.due_date}
+          >
+            Save Changes
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* Delete Confirmation Dialog */}
+    <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you sure you want to delete this invoice?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete the invoice 
+            {selectedInvoice && ` for ${selectedInvoice.client}`}.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={() => deleteInvoice.mutate()} className="bg-red-500 hover:bg-red-600">
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
 
     {/* View Invoice Dialog */}
     <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
