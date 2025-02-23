@@ -452,8 +452,9 @@ export default function Payroll() {
                 employeeName: payrollToEdit.name,
                 salary: payrollToEdit.salary,
                 pay_date: payrollToEdit.created_at,
+                pay_time: "12:00", // Default time or extract from created_at if needed
               }
-            : { employeeName: "", salary: 0, pay_date: "" }
+            : { employeeName: "", salary: 0, pay_date: "", pay_time: "12:00" }
         }
         setEditPayroll={(updatedPayroll) => {
           if (payrollToEdit) {
