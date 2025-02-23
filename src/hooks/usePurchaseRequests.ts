@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { PurchaseRequest } from "@/pages/Purchase";
+import { type PurchaseRequest } from "@/types/purchase";
+import { ApprovalSignature } from "@/types/purchase";
 
 export const usePurchaseRequests = () => {
   const { toast } = useToast();
@@ -75,7 +76,7 @@ export const usePurchaseRequests = () => {
 
         if (latestError) throw latestError;
 
-        const nextNoUrut = (latestRequests?.[0]?.no_urut ?? 0) + 1;
+        const nextNoUrut = parseInt(latestRequests?.[0]?.no_urut ?? "0", 10) + 1;
 
         // Insert the new request
         const { error: insertError } = await supabase
@@ -87,8 +88,8 @@ export const usePurchaseRequests = () => {
             amount: newRequest.amount,
             position: newRequest.position,
             status: "Pending",
-            no_urut: nextNoUrut,
-            file_url: fileUrl,
+            no_urut: nextNoUrut.toString(),
+            file_url: fileUrl
           });
 
         if (insertError) {
@@ -211,6 +212,69 @@ export const usePurchaseRequests = () => {
     },
   });
 
+  const signRequest = useMutation({
+    mutationFn: async (signature: ApprovalSignature) => {
+      const now = new Date().toISOString();
+      const updates: Record<string, any> = {};
+
+      switch (signature.role) {
+        case "admin":
+          updates.admin_validated = signature.approve;
+          updates.admin_validated_at = now;
+          updates.admin_validator = signature.userId;
+          updates.workflow_status = signature.approve
+            ? "pending_approval_leader"
+            : "rejected";
+          break;
+        case "approval_leader":
+          updates.approval_leader_signed = signature.approve;
+          updates.approval_leader_signed_at = now;
+          updates.approval_leader_id = signature.userId;
+          updates.workflow_status = signature.approve
+            ? "pending_nom"
+            : "rejected";
+          break;
+        case "nom":
+          updates.nom_signed = signature.approve;
+          updates.nom_signed_at = now;
+          updates.nom_id = signature.userId;
+          updates.workflow_status = signature.approve
+            ? "pending_sm"
+            : "rejected";
+          break;
+        case "sm":
+          updates.sm_signed = signature.approve;
+          updates.sm_signed_at = now;
+          updates.sm_id = signature.userId;
+          updates.workflow_status = signature.approve
+            ? "completed"
+            : "rejected";
+          break;
+      }
+
+      const { error } = await supabase
+        .from("purchase_requests")
+        .update(updates)
+        .eq("id", signature.requestId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchase_requests"] });
+      toast({
+        title: "Success",
+        description: "Purchase request approval updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update approval: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     requests,
     isLoading,
@@ -218,5 +282,6 @@ export const usePurchaseRequests = () => {
     updateStatus,
     editPurchaseRequest,
     deletePurchaseRequest,
+    signRequest,
   };
 };

@@ -10,12 +10,27 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { PurchaseRequest } from "@/pages/Purchase";
+import PurchaseRequest from "@/pages/Purchase";
 import { DeletePurchaseDialog } from "@/components/purchase/DeletePurchaseDialog";
 import { CreatePurchaseRequestDialog } from "@/components/purchase/CreatePurchaseRequestDialog";
 import { Dispatch, SetStateAction, useState, useEffect } from "react";
 
+type PurchaseRequestType = {
+  id: string;
+  request_id: string;
+  no_urut: string;
+  status: "Pending" | "Approved" | "Rejected";
+  requester: string;
+  position: string;
+  items: string;
+  amount: number;
+  created_at: string;
+  file_url?: string;
+};
+
 type PurchaseRequestDialogsProps = {
+  selectedRequest: PurchaseRequestType | null;
+  purchaseToDelete: PurchaseRequestType | null;
   createRequest: (newRequest: {
     requester: string;
     position: string;
@@ -27,8 +42,6 @@ type PurchaseRequestDialogsProps = {
     status: "Pending" | "Approved" | "Rejected";
   }) => void;
   deletePurchaseRequest: (id: string) => void;
-  selectedRequest: PurchaseRequest | null;
-  purchaseToDelete: PurchaseRequest | null;
   isCreateOpen: boolean;
   setIsCreateOpen: Dispatch<SetStateAction<boolean>>;
   isViewOpen: boolean;

@@ -68,52 +68,100 @@ export type Database = {
       }
       purchase_requests: {
         Row: {
-          amount: number
-          created_at: string
-          id: string
-          items: string
-          request_id: string
-          requester: string
-          status: string | null
-          no_urut: number
-        }
+          amount: number;
+          created_at: string;
+          id: string;
+          items: string;
+          request_id: string;
+          requester: string;
+          status: "Pending" | "Approved" | "Rejected" | null;
+          no_urut: string;
+        };
         Insert: {
-          amount: number
-          created_at?: string
-          id?: string
-          items: string
-          request_id: string
-          requester: string
-          status?: string | null
-          no_urut?: number
-        }
+          amount: number;
+          created_at?: string;
+          id?: string;
+          items: string;
+          request_id: string;
+          requester: string;
+          status?: "Pending" | "Approved" | "Rejected" | null;
+          no_urut?: string;
+        };
         Update: {
-          amount?: number
-          created_at?: string
-          id?: string
-          items?: string
-          request_id?: string
-          requester?: string
-          status?: string | null
-          no_urut?: number
-        }
-        Relationships: []
-      }
-    }
+          amount?: number;
+          created_at?: string;
+          id?: string;
+          items?: string;
+          request_id?: string;
+          requester?: string;
+          status?: "Pending" | "Approved" | "Rejected" | null;
+          no_urut?: string;
+        };
+        Relationships: [];
+      };
+      roles: {
+        Row: {
+          id: string;
+          name: string;
+        };
+        Insert: {
+          id: string;
+          name: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+        };
+        Relationships: [];
+      };
+      user_roles: {
+        Row: {
+          id: string;
+          user_id: string;
+          role_id: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          role_id: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          role_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_role_id_fkey";
+            columns: ["role_id"];
+            isOneToOne: false;
+            referencedRelation: "roles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "user_roles_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Enums: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
+      [_ in never]: never;
+    };
+  };
+};
 
 type PublicSchema = Database[Extract<keyof Database, "public">]
 
