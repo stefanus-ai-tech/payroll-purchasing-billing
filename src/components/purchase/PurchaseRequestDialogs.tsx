@@ -125,6 +125,20 @@ export const PurchaseRequestDialogs: React.FC<PurchaseRequestDialogsProps> = ({
                     {selectedRequest.items}
                   </p>
                 </div>
+
+                {selectedRequest.file_url && (
+                  <div className="col-span-2">
+                    <Label>Attachment </Label>
+                    <a
+                      href={selectedRequest.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-blue-500 hover:underline"
+                    >
+                      View Attachment
+                    </a>
+                  </div>
+                )}
               </div>
               <div className="flex gap-2 mt-4">
                 <Button

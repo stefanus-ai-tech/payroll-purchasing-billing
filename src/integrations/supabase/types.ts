@@ -75,6 +75,7 @@ export type Database = {
           request_id: string
           requester: string
           status: string | null
+          no_urut: number
         }
         Insert: {
           amount: number
@@ -84,6 +85,7 @@ export type Database = {
           request_id: string
           requester: string
           status?: string | null
+          no_urut?: number
         }
         Update: {
           amount?: number
@@ -93,6 +95,7 @@ export type Database = {
           request_id?: string
           requester?: string
           status?: string | null
+          no_urut?: number
         }
         Relationships: []
       }

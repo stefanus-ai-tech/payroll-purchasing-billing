@@ -28,36 +28,80 @@ export const usePurchaseRequests = () => {
       items: string;
       amount: number;
       position: string;
+      file: File | null;
     }) => {
-      // Generate request ID
-      const requestId = `PR${Math.floor(Math.random() * 10000)
-        .toString()
-        .padStart(4, "0")}`;
+      try {
+        const requestId = `PR${Math.floor(Math.random() * 10000)
+          .toString()
+          .padStart(4, "0")}`;
 
-      // Get the latest no_urut
-      const { data: latestRequests, error: latestError } = (await supabase
-        .from("purchase_requests")
-        .select("no_urut")
-        .order("no_urut", { ascending: false })
-        .limit(1)) as any; // Cast to any to bypass TS errors
+        let fileUrl: string | null = null;
+        if (newRequest.file) {
+          const fileName = `${Date.now()}-${newRequest.file.name}`;
+          const filePath = `${requestId}/${fileName}`;
 
-      if (latestError) throw latestError;
+          // Check file size and type before upload
+          if (newRequest.file.size > 5 * 1024 * 1024) {
+            // 5MB limit
+            throw new Error("File size exceeds 5MB limit");
+          }
 
-      const nextNoUrut =
-        ((latestRequests && latestRequests[0] && latestRequests[0].no_urut) ??
-          0) + 1;
+          // Upload file with proper content type
+          const { error: uploadError } = await supabase.storage
+            .from("purchase-requests")
+            .upload(filePath, newRequest.file, {
+              contentType: newRequest.file.type,
+              upsert: false,
+            });
 
-      const { error } = await supabase.from("purchase_requests").insert({
-        request_id: requestId,
-        requester: newRequest.requester,
-        items: newRequest.items,
-        amount: newRequest.amount,
-        position: newRequest.position,
-        status: "Pending",
-        no_urut: nextNoUrut,
-      });
+          if (uploadError) {
+            console.error("Upload error:", uploadError);
+            throw new Error(`File upload failed: ${uploadError.message}`);
+          }
 
-      if (error) throw error;
+          const {
+            data: { publicUrl },
+          } = supabase.storage.from("purchase-requests").getPublicUrl(filePath);
+
+          fileUrl = publicUrl;
+        }
+
+        // Get the latest no_urut in a transaction
+        const { data: latestRequests, error: latestError } = await supabase
+          .from("purchase_requests")
+          .select("no_urut")
+          .order("no_urut", { ascending: false })
+          .limit(1);
+
+        if (latestError) throw latestError;
+
+        const nextNoUrut = (latestRequests?.[0]?.no_urut ?? 0) + 1;
+
+        // Insert the new request
+        const { error: insertError } = await supabase
+          .from("purchase_requests")
+          .insert({
+            request_id: requestId,
+            requester: newRequest.requester,
+            items: newRequest.items,
+            amount: newRequest.amount,
+            position: newRequest.position,
+            status: "Pending",
+            no_urut: nextNoUrut,
+            file_url: fileUrl,
+          });
+
+        if (insertError) {
+          if (fileUrl) {
+            const filePath = fileUrl.split("/").slice(-2).join("/");
+            await supabase.storage.from("purchase-requests").remove([filePath]);
+          }
+          throw insertError;
+        }
+      } catch (error: any) {
+        console.error("Error in createRequest:", error);
+        throw new Error(error.message || "Failed to create purchase request");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchase_requests"] });

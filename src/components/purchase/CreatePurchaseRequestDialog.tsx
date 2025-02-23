@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,23 +19,42 @@ type CreatePurchaseRequestDialogProps = {
     position: string;
     items: string;
     amount: number;
+    file: File | null;
   }) => void;
 };
 
 export const CreatePurchaseRequestDialog: React.FC<
   CreatePurchaseRequestDialogProps
 > = ({ isOpen, onOpenChange, onCreate }) => {
-  const [newRequest, setNewRequest] = useState({
+  const [newRequest, setNewRequest] = useState<{
+    requester: string;
+    position: string;
+    items: string;
+    amount: number;
+    file: File | null;
+  }>({
     requester: "",
     position: "",
     items: "",
     amount: 0,
+    file: null,
   });
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = () => {
     onCreate(newRequest);
-    setNewRequest({ requester: "", items: "", amount: 0, position: "" });
+    setNewRequest({
+      requester: "",
+      items: "",
+      amount: 0,
+      position: "",
+      file: null,
+    });
     onOpenChange(false);
+      if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
   };
 
   return (
@@ -81,6 +100,25 @@ export const CreatePurchaseRequestDialog: React.FC<
               }
             />
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="file">Attachment</Label>
+            <Input
+              type="file"
+              id="file"
+              accept="image/*"
+                ref={fileInputRef}
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  setNewRequest((prev) => ({
+                    ...prev,
+                    file: e.target.files[0],
+                  }));
+                }
+              }}
+            />
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="amount">Amount (Rp)</Label>
             <Input

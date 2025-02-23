@@ -16,6 +16,7 @@ export type PurchaseRequest = {
   created_at: string;
   no_urut: number;
   position: string;
+  file_url?: string;
 };
 
 export default function Purchase() {
