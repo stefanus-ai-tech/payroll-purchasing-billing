@@ -3,14 +3,6 @@ import MainLayout from "@/components/MainLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -22,17 +14,9 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { EditPayrollDialog } from "@/components/payroll/EditPayrollDialog";
 import { DeletePayrollDialog } from "@/components/payroll/DeletePayrollDialog";
-
-type Employee = {
-  id: string;
-  name: string;
-  position: string;
-  salary: number;
-  status: "Pending" | "Processed";
-  created_at: string;
-};
+import { PayrollTable } from "@/components/payroll/PayrollTable";
+import { Employee } from "@/types/payroll";
 
 export default function Payroll() {
   const { toast } = useToast();
@@ -40,13 +24,13 @@ export default function Payroll() {
   const [processingAll, setProcessingAll] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
     null
   );
-  const [payrollToEdit, setPayrollToEdit] = useState<Employee | null>(null);
-  const [payrollToDelete, setPayrollToDelete] = useState<Employee | null>(null);
+  const [payrollToDelete, setPayrollToDelete] = useState<Employee | null>(
+    null
+  );
   const [newEmployee, setNewEmployee] = useState({
     name: "",
     position: "",
@@ -174,9 +158,7 @@ export default function Payroll() {
       });
       setProcessingAll(false);
     },
-  });
-
-  // Edit employee
+  }); // Edit employee
   const editEmployee = useMutation({
     mutationFn: async (updatedEmployee: Employee) => {
       const { error } = await supabase
@@ -194,8 +176,6 @@ export default function Payroll() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
-      setIsEditOpen(false);
-      setPayrollToEdit(null);
       toast({
         title: "Success",
         description: "Employee updated successfully",
@@ -271,69 +251,20 @@ export default function Payroll() {
           </div>
         </div>
 
-        <div className="overflow-auto">
-          <Card className="min-w-full">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>Position</TableHead>
-                  <TableHead>Salary</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {employees.map((employee) => (
-                  <TableRow key={employee.id}>
-                    <TableCell className="font-medium whitespace-nowrap">
-                      {employee.name}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      {employee.position}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      Rp {employee.salary.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      {employee.status}
-                    </TableCell>
-                    <TableCell className="text-right whitespace-nowrap">
-                      <Button
-                        variant="ghost"
-                        onClick={() => {
-                          setSelectedEmployee(employee);
-                          setIsViewOpen(true);
-                        }}
-                      >
-                        View Details
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        onClick={() => {
-                          setPayrollToEdit(employee);
-                          setIsEditOpen(true);
-                        }}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        className="text-red-500 hover:text-red-700"
-                        onClick={() => {
-                          setPayrollToDelete(employee);
-                          setIsDeleteOpen(true);
-                        }}
-                      >
-                        Delete
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
-        </div>
+        <PayrollTable
+          employees={employees}
+          onView={(employee) => {
+            setSelectedEmployee(employee);
+            setIsViewOpen(true);
+          }}
+          onSave={(employee) => {
+            editEmployee.mutate(employee);
+          }}
+          onDelete={(employee) => {
+            setPayrollToDelete(employee);
+            setIsDeleteOpen(true);
+          }}
+        />
       </div>
 
       {/* Create Employee Dialog */}
@@ -441,37 +372,6 @@ export default function Payroll() {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Edit Employee Dialog */}
-      <EditPayrollDialog
-        isOpen={isEditOpen}
-        onOpenChange={setIsEditOpen}
-        editPayroll={
-          payrollToEdit
-            ? {
-                employeeName: payrollToEdit.name,
-                salary: payrollToEdit.salary,
-                pay_date: payrollToEdit.created_at,
-                pay_time: "12:00", // Default time or extract from created_at if needed
-              }
-            : { employeeName: "", salary: 0, pay_date: "", pay_time: "12:00" }
-        }
-        setEditPayroll={(updatedPayroll) => {
-          if (payrollToEdit) {
-            setPayrollToEdit({
-              ...payrollToEdit,
-              name: updatedPayroll.employeeName,
-              salary: updatedPayroll.salary,
-              created_at: updatedPayroll.pay_date,
-            });
-          }
-        }}
-        onSubmit={() => {
-          if (payrollToEdit) {
-            editEmployee.mutate({ ...payrollToEdit });
-          }
-        }}
-      />
 
       {/* Delete Employee Dialog */}
       <DeletePayrollDialog
