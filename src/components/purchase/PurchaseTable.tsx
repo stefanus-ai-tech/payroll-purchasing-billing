@@ -84,7 +84,11 @@ export const PurchaseTable: React.FC<PurchaseTableProps> = ({
               <Button variant="ghost" onClick={() => onView(request)}>
                 View Details
               </Button>
-              <Button variant="ghost" onClick={() => onDelete(request)}>
+              <Button
+                variant="ghost"
+                className="text-red-500 hover:text-red-700"
+                onClick={() => onDelete(request)}
+              >
                 Delete
               </Button>
             </TableCell>

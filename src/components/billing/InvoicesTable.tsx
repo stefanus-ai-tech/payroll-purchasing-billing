@@ -1,5 +1,11 @@
-
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Invoice } from "@/types/billing";
@@ -15,7 +21,7 @@ export function InvoicesTable({
   invoices,
   onView,
   onEdit,
-  onDelete
+  onDelete,
 }: InvoicesTableProps) {
   return (
     <Table>
@@ -30,26 +36,36 @@ export function InvoicesTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {invoices.map(invoice => (
+        {invoices.map((invoice) => (
           <TableRow key={invoice.id}>
             <TableCell className="font-medium">{invoice.invoice_id}</TableCell>
             <TableCell>{invoice.client}</TableCell>
             <TableCell>Rp {invoice.amount.toLocaleString()}</TableCell>
-            <TableCell>{new Date(invoice.due_date).toLocaleDateString()}</TableCell>
             <TableCell>
-              <Badge variant={invoice.status === "Paid" ? "default" : invoice.status === "Overdue" ? "destructive" : "secondary"}>
+              {new Date(invoice.due_date).toLocaleDateString()}
+            </TableCell>
+            <TableCell>
+              <Badge
+                variant={
+                  invoice.status === "Paid"
+                    ? "default"
+                    : invoice.status === "Overdue"
+                    ? "destructive"
+                    : "secondary"
+                }
+              >
                 {invoice.status}
               </Badge>
             </TableCell>
             <TableCell className="text-right space-x-2">
               <Button variant="ghost" onClick={() => onView(invoice)}>
-                View
+                View Details
               </Button>
               <Button variant="ghost" onClick={() => onEdit(invoice)}>
                 Edit
               </Button>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 className="text-red-500 hover:text-red-700"
                 onClick={() => onDelete(invoice)}
               >

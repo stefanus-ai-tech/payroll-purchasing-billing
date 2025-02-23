@@ -2,8 +2,21 @@ import { useState, useEffect } from "react";
 import MainLayout from "@/components/MainLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -29,28 +42,30 @@ export default function Payroll() {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
+    null
+  );
   const [payrollToEdit, setPayrollToEdit] = useState<Employee | null>(null);
   const [payrollToDelete, setPayrollToDelete] = useState<Employee | null>(null);
-    const [newEmployee, setNewEmployee] = useState({
-        name: "",
-        position: "",
-        salary: 0,
-    });
+  const [newEmployee, setNewEmployee] = useState({
+    name: "",
+    position: "",
+    salary: 0,
+  });
 
-    // Subscribe to realtime changes
-    useEffect(() => {
+  // Subscribe to realtime changes
+  useEffect(() => {
     const channel = supabase
-      .channel('employees-changes')
+      .channel("employees-changes")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'employees',
+          event: "*",
+          schema: "public",
+          table: "employees",
         },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['employees'] });
+          queryClient.invalidateQueries({ queryKey: ["employees"] });
         }
       )
       .subscribe();
@@ -164,13 +179,16 @@ export default function Payroll() {
   // Edit employee
   const editEmployee = useMutation({
     mutationFn: async (updatedEmployee: Employee) => {
-      const { error } = await supabase.from("employees").update({
-        name: updatedEmployee.name,
-        position: updatedEmployee.position,
-        salary: updatedEmployee.salary,
-        created_at: updatedEmployee.created_at,
-        status: updatedEmployee.status,
-      }).eq("id", updatedEmployee.id);
+      const { error } = await supabase
+        .from("employees")
+        .update({
+          name: updatedEmployee.name,
+          position: updatedEmployee.position,
+          salary: updatedEmployee.salary,
+          created_at: updatedEmployee.created_at,
+          status: updatedEmployee.status,
+        })
+        .eq("id", updatedEmployee.id);
 
       if (error) throw error;
     },
@@ -195,7 +213,10 @@ export default function Payroll() {
   // Delete employee
   const deleteEmployee = useMutation({
     mutationFn: async (employeeId: string) => {
-      const { error } = await supabase.from("employees").delete().eq("id", employeeId);
+      const { error } = await supabase
+        .from("employees")
+        .delete()
+        .eq("id", employeeId);
 
       if (error) throw error;
     },
@@ -233,13 +254,17 @@ export default function Payroll() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h2 className="text-3xl font-bold tracking-tight">Payroll</h2>
-            <p className="text-muted-foreground">Manage employee salaries and payments</p>
+            <p className="text-muted-foreground">
+              Manage employee salaries and payments
+            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => setIsCreateOpen(true)}>Add Employee</Button>
             <Button
               onClick={() => processAllPayroll.mutate()}
-              disabled={processingAll || !employees.some((e) => e.status === "Pending")}
+              disabled={
+                processingAll || !employees.some((e) => e.status === "Pending")
+              }
             >
               Process All Pending
             </Button>
@@ -261,10 +286,18 @@ export default function Payroll() {
               <TableBody>
                 {employees.map((employee) => (
                   <TableRow key={employee.id}>
-                    <TableCell className="font-medium whitespace-nowrap">{employee.name}</TableCell>
-                    <TableCell className="whitespace-nowrap">{employee.position}</TableCell>
-                    <TableCell className="whitespace-nowrap">Rp {employee.salary.toLocaleString()}</TableCell>
-                    <TableCell className="whitespace-nowrap">{employee.status}</TableCell>
+                    <TableCell className="font-medium whitespace-nowrap">
+                      {employee.name}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {employee.position}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      Rp {employee.salary.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {employee.status}
+                    </TableCell>
                     <TableCell className="text-right whitespace-nowrap">
                       <Button
                         variant="ghost"
@@ -286,6 +319,7 @@ export default function Payroll() {
                       </Button>
                       <Button
                         variant="ghost"
+                        className="text-red-500 hover:text-red-700"
                         onClick={() => {
                           setPayrollToDelete(employee);
                           setIsDeleteOpen(true);
@@ -314,7 +348,9 @@ export default function Payroll() {
               <Input
                 id="name"
                 value={newEmployee.name}
-                onChange={(e) => setNewEmployee((prev) => ({ ...prev, name: e.target.value }))}
+                onChange={(e) =>
+                  setNewEmployee((prev) => ({ ...prev, name: e.target.value }))
+                }
               />
             </div>
             <div className="space-y-2">
@@ -322,26 +358,40 @@ export default function Payroll() {
               <Input
                 id="position"
                 value={newEmployee.position}
-                onChange={(e) => setNewEmployee((prev) => ({ ...prev, position: e.target.value }))}
+                onChange={(e) =>
+                  setNewEmployee((prev) => ({
+                    ...prev,
+                    position: e.target.value,
+                  }))
+                }
               />
             </div>
-          <div className="space-y-2">
-            <Label htmlFor="salary">Salary (Rp)</Label>
-            <Input
-              id="salary"
-              type="number"
-              value={newEmployee.salary}
-              onChange={(e) => setNewEmployee((prev) => ({ ...prev, salary: parseFloat(e.target.value || "0") }))}
-            />
+            <div className="space-y-2">
+              <Label htmlFor="salary">Salary (Rp)</Label>
+              <Input
+                id="salary"
+                type="number"
+                value={newEmployee.salary}
+                onChange={(e) =>
+                  setNewEmployee((prev) => ({
+                    ...prev,
+                    salary: parseFloat(e.target.value || "0"),
+                  }))
+                }
+              />
+            </div>
           </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
               Cancel
             </Button>
             <Button
               onClick={() => createEmployee.mutate()}
-              disabled={!newEmployee.name || !newEmployee.position || !newEmployee.salary}
+              disabled={
+                !newEmployee.name ||
+                !newEmployee.position ||
+                !newEmployee.salary
+              }
             >
               Add Employee
             </Button>
@@ -368,7 +418,9 @@ export default function Payroll() {
                 </div>
                 <div>
                   <Label>Salary</Label>
-                  <p className="font-medium">Rp {selectedEmployee.salary.toLocaleString()}</p>
+                  <p className="font-medium">
+                    Rp {selectedEmployee.salary.toLocaleString()}
+                  </p>
                 </div>
                 <div>
                   <Label>Status</Label>
@@ -378,7 +430,9 @@ export default function Payroll() {
               <div className="flex gap-2 mt-4">
                 <Button
                   disabled={selectedEmployee.status === "Processed"}
-                  onClick={() => processSinglePayroll.mutate(selectedEmployee.id)}
+                  onClick={() =>
+                    processSinglePayroll.mutate(selectedEmployee.id)
+                  }
                 >
                   Process Payroll
                 </Button>
@@ -393,15 +447,15 @@ export default function Payroll() {
         isOpen={isEditOpen}
         onOpenChange={setIsEditOpen}
         editPayroll={
-          payrollToEdit ? {
-            employeeName: payrollToEdit.name,
-            salary: payrollToEdit.salary,
-            pay_date: payrollToEdit.created_at,
-          } : { employeeName: "", salary: 0, pay_date: "" }
-
+          payrollToEdit
+            ? {
+                employeeName: payrollToEdit.name,
+                salary: payrollToEdit.salary,
+                pay_date: payrollToEdit.created_at,
+              }
+            : { employeeName: "", salary: 0, pay_date: "" }
         }
         setEditPayroll={(updatedPayroll) => {
-
           if (payrollToEdit) {
             setPayrollToEdit({
               ...payrollToEdit,
@@ -413,9 +467,10 @@ export default function Payroll() {
         }}
         onSubmit={() => {
           if (payrollToEdit) {
-            editEmployee.mutate({ ...payrollToEdit })
+            editEmployee.mutate({ ...payrollToEdit });
           }
-        }} />
+        }}
+      />
 
       {/* Delete Employee Dialog */}
       <DeletePayrollDialog
