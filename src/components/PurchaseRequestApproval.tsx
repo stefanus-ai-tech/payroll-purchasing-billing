@@ -3,11 +3,6 @@ import { PurchaseRequest, ApprovalSignature } from "@/types/purchase";
 import { usePurchaseRequests } from "@/hooks/usePurchaseRequests";
 import { useUser } from "@/hooks/useUser";
 
-export interface User {
-  id: string;
-  role: "admin" | "approval_leader" | "nom" | "sm";
-}
-
 interface ApprovalProps {
   request: PurchaseRequest;
 }
@@ -19,7 +14,7 @@ export function PurchaseRequestApproval({ request }: ApprovalProps) {
   const handleApproval = async (approve: boolean) => {
     if (!user?.id) return;
 
-    let role: ApprovalSignature["role"];
+    let role: "admin" | "approval_leader" | "nom" | "sm";
 
     switch (request.workflow_status) {
       case "pending_validation":
@@ -46,11 +41,7 @@ export function PurchaseRequestApproval({ request }: ApprovalProps) {
     });
   };
 
-  // Render buttons only for the correct user and workflow status
-  const isAdmin = user?.role === "admin";
-  const isApprovalLeader = user?.role === "approval_leader";
-  const isNom = user?.role === "nom";
-  const isSm = user?.role === "sm";
+
 
   if (
     request.workflow_status === "completed" ||
@@ -60,11 +51,11 @@ export function PurchaseRequestApproval({ request }: ApprovalProps) {
   }
 
   if (
-    (request.workflow_status === "pending_validation" && isAdmin) ||
+    (request.workflow_status === "pending_validation" && user?.role === "admin") ||
     (request.workflow_status === "pending_approval_leader" &&
-      isApprovalLeader) ||
-    (request.workflow_status === "pending_nom" && isNom) ||
-    (request.workflow_status === "pending_sm" && isSm)
+      user?.role === "approval_leader") ||
+    (request.workflow_status === "pending_nom" && user?.role === "nom") ||
+    (request.workflow_status === "pending_sm" && user?.role === "sm")
   ) {
     return (
       <div className="flex gap-2">
