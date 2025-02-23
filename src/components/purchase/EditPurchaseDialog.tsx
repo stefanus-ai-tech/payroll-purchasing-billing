@@ -5,6 +5,7 @@ interface PurchaseData {
   itemName: string;
   quantity: number;
   created_at: string;
+  no_urut: number;
 }
 
 interface ValidationError {
@@ -48,6 +49,8 @@ export function EditPurchaseDialog({
         const today = new Date();
         // Allow created_at to be in the future
         return null;
+      case "no_urut":
+        return null; // No validation needed for no_urut
       default:
         return null;
     }
@@ -78,6 +81,15 @@ export function EditPurchaseDialog({
       required: true,
       placeholder: "Enter date",
       validate: (value: string) => validateField("created_at", value),
+    },
+    {
+      name: "no_urut",
+      label: "No Urut",
+      type: "number" as const,
+      required: false,
+      placeholder: "Auto-generated",
+      validate: (value: number) => validateField("no_urut", value),
+      readOnly: true,
     },
   ];
 

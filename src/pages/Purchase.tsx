@@ -35,6 +35,7 @@ type PurchaseRequest = {
   amount: number;
   status: "Pending" | "Approved" | "Rejected";
   created_at: string;
+  no_urut: number;
 };
 
 export default function Purchase() {
@@ -78,12 +79,25 @@ export default function Purchase() {
         .toString()
         .padStart(4, "0")}`;
 
+      // Get the latest no_urut
+      // Get the latest no_urut, casting the result to any to bypass TS errors
+      const { data: latestRequests, error: latestError } = await supabase
+        .from("purchase_requests")
+        .select("no_urut")
+        .order("no_urut", { ascending: false })
+        .limit(1) as any;
+
+      if (latestError) throw latestError;
+
+      const nextNoUrut = ((latestRequests && latestRequests[0] && latestRequests[0].no_urut) ?? 0) + 1;
+
       const { error } = await supabase.from("purchase_requests").insert({
         request_id: requestId,
         requester: newRequest.requester,
         items: newRequest.items,
         amount: newRequest.amount,
         status: "Pending",
+        no_urut: nextNoUrut,
       });
 
       if (error) throw error;
@@ -228,6 +242,7 @@ export default function Purchase() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>No Urut</TableHead>
                 <TableHead>Request ID</TableHead>
                 <TableHead>Requester</TableHead>
                 <TableHead>Items</TableHead>
@@ -239,6 +254,7 @@ export default function Purchase() {
             <TableBody>
               {requests.map((request) => (
                 <TableRow key={request.id}>
+                  <TableCell>{request.no_urut}</TableCell>
                   <TableCell className="font-medium">
                     {request.request_id}
                   </TableCell>
@@ -367,6 +383,7 @@ export default function Purchase() {
                 </div>
                 <div>
                   <Label>No Urut</Label>
+                  <p className="font-medium">{selectedRequest.no_urut}</p>
                 </div>
                 <div>
                   <Label>Status</Label>
@@ -449,8 +466,9 @@ export default function Purchase() {
                 itemName: purchaseToEdit.items,
                 quantity: purchaseToEdit.amount,
                 created_at: purchaseToEdit.created_at,
+                no_urut: purchaseToEdit.no_urut ?? 0,
               }
-            : { itemName: "", quantity: 0, created_at: "" }
+            : { itemName: "", quantity: 0, created_at: "", no_urut: 0 }
         }
         setEditPurchase={(updatedPurchase) => {
           if (purchaseToEdit) {
@@ -459,10 +477,11 @@ export default function Purchase() {
               items: updatedPurchase.itemName,
               amount: updatedPurchase.quantity,
               created_at: updatedPurchase.created_at,
+              no_urut: updatedPurchase.no_urut,
             });
           }
         }}
-      onSubmit={() => {
+        onSubmit={() => {
           if (purchaseToEdit) {
             editPurchaseRequest.mutate(purchaseToEdit);
           }
