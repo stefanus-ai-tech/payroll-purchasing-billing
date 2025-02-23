@@ -57,13 +57,13 @@ export default function Purchase() {
     });
 
   // Fetch purchase requests
-    const { data: requests = [], isLoading } = useQuery({
+  const { data: requests = [], isLoading } = useQuery({
     queryKey: ["purchase_requests"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("purchase_requests")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: true }); // Order by created_at
 
       if (error) throw error;
       return data as PurchaseRequest[];
@@ -366,6 +366,9 @@ export default function Purchase() {
                   <p className="font-medium">{selectedRequest.request_id}</p>
                 </div>
                 <div>
+                  <Label>No Urut</Label>
+                </div>
+                <div>
                   <Label>Status</Label>
                   <Badge
                     className="mt-1"
@@ -441,28 +444,30 @@ export default function Purchase() {
         isOpen={isEditOpen}
         onOpenChange={setIsEditOpen}
         editPurchase={
-                    purchaseToEdit ? {
-                        itemName: purchaseToEdit.items,
-                        quantity: purchaseToEdit.amount,
-                        created_at: purchaseToEdit.created_at
-                    } : { itemName: "", quantity: 0, created_at: "" }
-                }
-                setEditPurchase={(updatedPurchase) => {
-                    if (purchaseToEdit) {
-                        setPurchaseToEdit({
-                            ...purchaseToEdit,
-                            items: updatedPurchase.itemName,
-                            amount: updatedPurchase.quantity,
-                            created_at: updatedPurchase.created_at
-                        });
-                    }
-                }}
-                onSubmit={() => {
-                    if (purchaseToEdit) {
-                        editPurchaseRequest.mutate(purchaseToEdit);
-                    }
-                }}
-            />
+          purchaseToEdit
+            ? {
+                itemName: purchaseToEdit.items,
+                quantity: purchaseToEdit.amount,
+                created_at: purchaseToEdit.created_at,
+              }
+            : { itemName: "", quantity: 0, created_at: "" }
+        }
+        setEditPurchase={(updatedPurchase) => {
+          if (purchaseToEdit) {
+            setPurchaseToEdit({
+              ...purchaseToEdit,
+              items: updatedPurchase.itemName,
+              amount: updatedPurchase.quantity,
+              created_at: updatedPurchase.created_at,
+            });
+          }
+        }}
+      onSubmit={() => {
+          if (purchaseToEdit) {
+            editPurchaseRequest.mutate(purchaseToEdit);
+          }
+        }}
+      />
 
       {/* Delete Purchase Request Dialog */}
       <DeletePurchaseDialog
@@ -477,4 +482,5 @@ export default function Purchase() {
       />
     </MainLayout>
   );
+  
 }

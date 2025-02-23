@@ -110,7 +110,7 @@ export function EditPurchaseDialog({
 
     setEditPurchase(formattedPurchase);
     onSubmit();
-  };
+};
 
   return (
     <EditDialog
