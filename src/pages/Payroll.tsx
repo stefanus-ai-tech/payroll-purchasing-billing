@@ -28,9 +28,7 @@ export default function Payroll() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
     null
   );
-  const [payrollToDelete, setPayrollToDelete] = useState<Employee | null>(
-    null
-  );
+  const [payrollToDelete, setPayrollToDelete] = useState<Employee | null>(null);
   const [newEmployee, setNewEmployee] = useState({
     name: "",
     position: "",
@@ -230,10 +228,10 @@ export default function Payroll() {
 
   return (
     <MainLayout>
-      <div className="space-y-8 animate-fade-up my-[44px]">
+      <div className="space-y-6 animate-fade-up my-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Payroll</h2>
+            <h2 className="text-2xl font-bold tracking-tight">Payroll</h2>
             <p className="text-muted-foreground">
               Manage employee salaries and payments
             </p>
@@ -257,16 +255,16 @@ export default function Payroll() {
               employees={employees}
               onView={(employee) => {
                 setSelectedEmployee(employee);
-            setIsViewOpen(true);
-          }}
-          onSave={(employee) => {
-            editEmployee.mutate(employee);
-          }}
-          onDelete={(employee) => {
-            setPayrollToDelete(employee);
-            setIsDeleteOpen(true);
-          }}
-        />
+                setIsViewOpen(true);
+              }}
+              onSave={(employee) => {
+                editEmployee.mutate(employee);
+              }}
+              onDelete={(employee) => {
+                setPayrollToDelete(employee);
+                setIsDeleteOpen(true);
+              }}
+            />
           </CardContent>
         </Card>
       </div>

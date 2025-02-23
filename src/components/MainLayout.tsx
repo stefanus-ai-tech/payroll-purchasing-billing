@@ -96,7 +96,9 @@ export default function MainLayout({
 
       {/* Main Content */}
       <div className="lg:pl-64">
-        <main className="min-h-screen p-8 animate-fade-in">{children}</main>
+        <main className="min-h-screen p-4 lg:p-6 animate-fade-in max-w-[1400px] mx-auto">
+          {children}
+        </main>
       </div>
 
       {/* Mobile Sidebar Overlay */}

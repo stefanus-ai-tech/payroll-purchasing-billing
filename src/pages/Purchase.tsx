@@ -8,11 +8,18 @@ import { PurchaseRequestDialogs } from "@/components/purchase/PurchaseRequestDia
 import { PurchaseRequest } from "@/types/purchase";
 
 export default function Purchase() {
-  const { requests, isLoading, createRequest, updateStatus, deletePurchaseRequest } =
-    usePurchaseRequests();
+  const {
+    requests,
+    isLoading,
+    createRequest,
+    updateStatus,
+    deletePurchaseRequest,
+  } = usePurchaseRequests();
 
-    const [selectedRequest, setSelectedRequest] = useState<PurchaseRequest | null>(null);
-    const [purchaseToDelete, setPurchaseToDelete] = useState<PurchaseRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] =
+    useState<PurchaseRequest | null>(null);
+  const [purchaseToDelete, setPurchaseToDelete] =
+    useState<PurchaseRequest | null>(null);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
@@ -30,7 +37,7 @@ export default function Purchase() {
 
   return (
     <MainLayout>
-      <div className="space-y-4 mt-[60px]">
+      <div className="space-y-4 my-4">
         <div className="flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-bold tracking-tight">
@@ -63,7 +70,14 @@ export default function Purchase() {
         createRequest={createRequest.mutate}
         updateStatus={updateStatus.mutate}
         deletePurchaseRequest={deletePurchaseRequest.mutate}
-        selectedRequest={selectedRequest ? {...selectedRequest, no_urut: selectedRequest.no_urut.toString()} : null}
+        selectedRequest={
+          selectedRequest
+            ? {
+                ...selectedRequest,
+                no_urut: selectedRequest.no_urut.toString(),
+              }
+            : null
+        }
         purchaseToDelete={purchaseToDelete}
         isCreateOpen={isCreateOpen}
         setIsCreateOpen={setIsCreateOpen}

@@ -1,5 +1,11 @@
-
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +18,11 @@ interface EditInvoiceDialogProps {
     amount: string;
     due_date: string;
   };
-  setEditInvoice: (invoice: { client: string; amount: string; due_date: string }) => void;
+  setEditInvoice: (invoice: {
+    client: string;
+    amount: string;
+    due_date: string;
+  }) => void;
   onSubmit: () => void;
 }
 
@@ -21,13 +31,16 @@ export function EditInvoiceDialog({
   onOpenChange,
   editInvoice,
   setEditInvoice,
-  onSubmit
+  onSubmit,
 }: EditInvoiceDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Invoice</DialogTitle>
+          <DialogDescription>
+            Modify the invoice details below.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
@@ -35,7 +48,9 @@ export function EditInvoiceDialog({
             <Input
               id="edit-client"
               value={editInvoice.client}
-              onChange={(e) => setEditInvoice({ ...editInvoice, client: e.target.value })}
+              onChange={(e) =>
+                setEditInvoice({ ...editInvoice, client: e.target.value })
+              }
             />
           </div>
           <div className="space-y-2">
@@ -44,7 +59,9 @@ export function EditInvoiceDialog({
               id="edit-amount"
               type="number"
               value={editInvoice.amount}
-              onChange={(e) => setEditInvoice({ ...editInvoice, amount: e.target.value })}
+              onChange={(e) =>
+                setEditInvoice({ ...editInvoice, amount: e.target.value })
+              }
             />
           </div>
           <div className="space-y-2">
@@ -53,15 +70,23 @@ export function EditInvoiceDialog({
               id="edit-dueDate"
               type="date"
               value={editInvoice.due_date}
-              onChange={(e) => setEditInvoice({ ...editInvoice, due_date: e.target.value })}
+              onChange={(e) =>
+                setEditInvoice({ ...editInvoice, due_date: e.target.value })
+              }
             />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
           <Button
             onClick={onSubmit}
-            disabled={!editInvoice.client || !editInvoice.amount || !editInvoice.due_date}
+            disabled={
+              !editInvoice.client ||
+              !editInvoice.amount ||
+              !editInvoice.due_date
+            }
           >
             Save Changes
           </Button>

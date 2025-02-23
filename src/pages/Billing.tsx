@@ -12,9 +12,7 @@ import { DeleteInvoiceDialog } from "@/components/billing/DeleteInvoiceDialog";
 import { InvoicesTable } from "@/components/billing/InvoicesTable";
 import type { Invoice } from "@/types/billing";
 export default function Billing() {
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
@@ -24,217 +22,246 @@ export default function Billing() {
   const [newInvoice, setNewInvoice] = useState({
     client: "",
     amount: "",
-    due_date: ""
+    due_date: "",
   });
   const [editInvoice, setEditInvoice] = useState({
     client: "",
     amount: "",
-    due_date: ""
+    due_date: "",
   });
 
   // Fetch invoices
-  const {
-    data: invoices = [],
-    isLoading
-  } = useQuery({
+  const { data: invoices = [], isLoading } = useQuery({
     queryKey: ["invoices"],
     queryFn: async () => {
-      const {
-        data,
-        error
-      } = await supabase.from("invoices").select("*").order("created_at", {
-        ascending: false
-      });
+      const { data, error } = await supabase
+        .from("invoices")
+        .select("*")
+        .order("created_at", {
+          ascending: false,
+        });
       if (error) throw error;
       return data as Invoice[];
-    }
+    },
   });
 
   // Create invoice
   const createInvoice = useMutation({
     mutationFn: async () => {
-      const invoiceId = `INV${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
-      const {
-        error
-      } = await supabase.from("invoices").insert({
+      const invoiceId = `INV${Math.floor(Math.random() * 10000)
+        .toString()
+        .padStart(4, "0")}`;
+      const { error } = await supabase.from("invoices").insert({
         invoice_id: invoiceId,
         client: newInvoice.client,
         amount: parseFloat(newInvoice.amount),
         due_date: newInvoice.due_date,
-        status: "Pending"
+        status: "Pending",
       });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["invoices"]
+        queryKey: ["invoices"],
       });
       setIsCreateOpen(false);
       setNewInvoice({
         client: "",
         amount: "",
-        due_date: ""
+        due_date: "",
       });
       toast({
         title: "Success",
-        description: "Invoice created successfully"
+        description: "Invoice created successfully",
       });
     },
-    onError: error => {
+    onError: (error) => {
       toast({
         title: "Error",
         description: "Failed to create invoice: " + error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   // Update invoice
   const updateInvoice = useMutation({
     mutationFn: async () => {
-      const {
-        error
-      } = await supabase.from("invoices").update({
-        client: editInvoice.client,
-        amount: parseFloat(editInvoice.amount),
-        due_date: editInvoice.due_date
-      }).eq("id", selectedInvoice?.id);
+      const { error } = await supabase
+        .from("invoices")
+        .update({
+          client: editInvoice.client,
+          amount: parseFloat(editInvoice.amount),
+          due_date: editInvoice.due_date,
+        })
+        .eq("id", selectedInvoice?.id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["invoices"]
+        queryKey: ["invoices"],
       });
       setIsEditOpen(false);
       setSelectedInvoice(null);
       setEditInvoice({
         client: "",
         amount: "",
-        due_date: ""
+        due_date: "",
       });
       toast({
         title: "Success",
-        description: "Invoice updated successfully"
+        description: "Invoice updated successfully",
       });
     },
-    onError: error => {
+    onError: (error) => {
       toast({
         title: "Error",
         description: "Failed to update invoice: " + error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   // Delete invoice
   const deleteInvoice = useMutation({
     mutationFn: async () => {
-      const {
-        error
-      } = await supabase.from("invoices").delete().eq("id", selectedInvoice?.id);
+      const { error } = await supabase
+        .from("invoices")
+        .delete()
+        .eq("id", selectedInvoice?.id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["invoices"]
+        queryKey: ["invoices"],
       });
       setIsDeleteOpen(false);
       setSelectedInvoice(null);
       toast({
         title: "Success",
-        description: "Invoice deleted successfully"
+        description: "Invoice deleted successfully",
       });
     },
-    onError: error => {
+    onError: (error) => {
       toast({
         title: "Error",
         description: "Failed to delete invoice: " + error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   // Update invoice status
   const updateStatus = useMutation({
-    mutationFn: async ({
-      status
-    }: {
-      status: "Paid" | "Overdue";
-    }) => {
-      const {
-        error
-      } = await supabase.from("invoices").update({
-        status
-      }).eq("id", selectedInvoice?.id);
+    mutationFn: async ({ status }: { status: "Paid" | "Overdue" }) => {
+      const { error } = await supabase
+        .from("invoices")
+        .update({
+          status,
+        })
+        .eq("id", selectedInvoice?.id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["invoices"]
+        queryKey: ["invoices"],
       });
       setIsViewOpen(false);
       setSelectedInvoice(null);
       toast({
         title: "Success",
-        description: "Invoice status updated successfully"
+        description: "Invoice status updated successfully",
       });
     },
-    onError: error => {
+    onError: (error) => {
       toast({
         title: "Error",
         description: "Failed to update invoice: " + error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
   if (isLoading) {
-    return <MainLayout>
+    return (
+      <MainLayout>
         <div className="flex items-center justify-center h-screen">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
-      </MainLayout>;
+      </MainLayout>
+    );
   }
-  return <MainLayout>
-      <div className="space-y-8 animate-fade-up my-[44px]">
-        <div className="flex justify-between items-center">
+  return (
+    <MainLayout>
+      <div className="space-y-6 animate-fade-up my-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Billing</h2>
+            <h2 className="text-2xl font-bold tracking-tight">Billing</h2>
             <p className="text-muted-foreground">
               Manage invoices and payment tracking
             </p>
           </div>
-          <Button onClick={() => setIsCreateOpen(true)} className="mx-[34px]">Create Invoice</Button>
+          <Button onClick={() => setIsCreateOpen(true)}>Create Invoice</Button>
         </div>
 
         <Card>
           <div className="overflow-x-auto">
-            <InvoicesTable invoices={invoices} onView={invoice => {
-            setSelectedInvoice(invoice);
-            setIsViewOpen(true);
-          }} onEdit={invoice => {
-            setSelectedInvoice(invoice);
-            setEditInvoice({
-              client: invoice.client,
-              amount: invoice.amount.toString(),
-              due_date: invoice.due_date
-            });
-            setIsEditOpen(true);
-          }} onDelete={invoice => {
-            setSelectedInvoice(invoice);
-            setIsDeleteOpen(true);
-          }} />
+            <InvoicesTable
+              invoices={invoices}
+              onView={(invoice) => {
+                setSelectedInvoice(invoice);
+                setIsViewOpen(true);
+              }}
+              onEdit={(invoice) => {
+                setSelectedInvoice(invoice);
+                setEditInvoice({
+                  client: invoice.client,
+                  amount: invoice.amount.toString(),
+                  due_date: invoice.due_date,
+                });
+                setIsEditOpen(true);
+              }}
+              onDelete={(invoice) => {
+                setSelectedInvoice(invoice);
+                setIsDeleteOpen(true);
+              }}
+            />
           </div>
         </Card>
       </div>
 
-      <CreateInvoiceDialog isOpen={isCreateOpen} onOpenChange={setIsCreateOpen} newInvoice={newInvoice} setNewInvoice={setNewInvoice} onSubmit={() => createInvoice.mutate()} />
+      <CreateInvoiceDialog
+        isOpen={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
+        newInvoice={newInvoice}
+        setNewInvoice={setNewInvoice}
+        onSubmit={() => createInvoice.mutate()}
+      />
 
-      <EditInvoiceDialog isOpen={isEditOpen} onOpenChange={setIsEditOpen} editInvoice={editInvoice} setEditInvoice={setEditInvoice} onSubmit={() => updateInvoice.mutate()} />
+      <EditInvoiceDialog
+        isOpen={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        editInvoice={editInvoice}
+        setEditInvoice={setEditInvoice}
+        onSubmit={() => updateInvoice.mutate()}
+      />
 
-      <ViewInvoiceDialog isOpen={isViewOpen} onOpenChange={setIsViewOpen} invoice={selectedInvoice} onUpdateStatus={status => updateStatus.mutate({
-      status
-    })} />
+      <ViewInvoiceDialog
+        isOpen={isViewOpen}
+        onOpenChange={setIsViewOpen}
+        invoice={selectedInvoice}
+        onUpdateStatus={(status) =>
+          updateStatus.mutate({
+            status,
+          })
+        }
+      />
 
-      <DeleteInvoiceDialog isOpen={isDeleteOpen} onOpenChange={setIsDeleteOpen} invoice={selectedInvoice} onConfirm={() => deleteInvoice.mutate()} />
-    </MainLayout>;
+      <DeleteInvoiceDialog
+        isOpen={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        invoice={selectedInvoice}
+        onConfirm={() => deleteInvoice.mutate()}
+      />
+    </MainLayout>
+  );
 }
