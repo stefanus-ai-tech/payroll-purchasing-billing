@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 interface User {
   id: string;
   email: string;
-  role: "admin" | "approval_leader" | "nom" | "sm";
+  role: "Admin" | "Leader" | "NOM" | "SM";
 }
 
 export function useUser() {
@@ -17,7 +17,7 @@ export function useUser() {
       setUser({
         id: "1",
         email: "test@example.com",
-        role: "admin",
+        role: "Admin",
       });
       setIsLoading(false);
     };
@@ -29,7 +29,7 @@ export function useUser() {
     user,
     isLoading,
     // Add dummy login/logout functions if needed
-    login: () => setUser({ id: "1", email: "test@example.com", role: "admin" }),
+    login: () => setUser({ id: "1", email: "test@example.com", role: "Admin" }),
     logout: () => setUser(null),
   };
 }

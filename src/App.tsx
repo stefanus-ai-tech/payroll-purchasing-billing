@@ -57,13 +57,13 @@ const RoleSelection = ({
 }: {
   onRoleSelect: (role: string) => void;
 }) => {
-  const roles = ["Admin", "Manager", "Employee"];
+  const roles = ["Admin", "Leader", "NOM", "SM"];
 
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-6 shadow-lg">
         <h2 className="text-center text-3xl font-bold">Select a Role</h2>
-        <div className="flex space-x-4">
+        <div className="flex justify-center space-x-4">
           {roles.map((role) => (
             <Button key={role} onClick={() => onRoleSelect(role)}>
               {role}
