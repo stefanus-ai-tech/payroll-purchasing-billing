@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,6 +19,8 @@ import { useUser } from "./hooks/useUser";
 import { useEffect } from "react";
 import { supabase } from "./integrations/supabase/client";
 import MainLayout from "./components/MainLayout";
+import { Dashboard } from "@/components/Dashboard";
+import AuthCallbackPage from "@/app/auth/callback/page";
 
 const queryClient = new QueryClient();
 
@@ -27,24 +28,26 @@ const queryClient = new QueryClient();
 const AuthCallback = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession();
+      try {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
 
-      if (error) {
+        if (error) throw error;
+        if (session) {
+          window.location.replace("/");
+        }
+      } catch (error) {
         console.error("Error in auth callback:", error);
-        // Handle error (e.g., redirect to an error page)
-      } else if (session) {
-        // Redirect to home page after successful login
-        window.location.href = "/";
+        window.location.replace("/login");
       }
     };
 
     handleAuthCallback();
   }, []);
 
-  return <div>Loading...</div>; // Or a loading spinner
+  return <div>Loading...</div>;
 };
 
 // Protected route wrapper
@@ -55,7 +58,11 @@ const ProtectedRoute = () => {
     return <div>Loading...</div>; // Or a loading spinner
   }
 
-  return user ? <Outlet /> : <Navigate to="/login" replace />;
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Outlet />;
 };
 
 const App = () => (
@@ -66,14 +73,18 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          {/* Wrap routes that require authentication */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<MainLayout><Index /></MainLayout>} />
-            <Route path="/payroll" element={<MainLayout><Payroll /></MainLayout>} />
-            <Route path="/purchase" element={<MainLayout><Purchase /></MainLayout>} />
-            <Route path="/billing" element={<MainLayout><Billing /></MainLayout>} />
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
+
+          {/* Dashboard and protected routes */}
+          <Route path="/dashboard" element={<Dashboard />}>
+            <Route index element={<Index />} />
+            <Route path="payroll" element={<Payroll />} />
+            <Route path="purchase" element={<Purchase />} />
+            <Route path="billing" element={<Billing />} />
           </Route>
+
+          {/* Root redirect */}
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
