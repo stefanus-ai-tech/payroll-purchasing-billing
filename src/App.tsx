@@ -107,13 +107,7 @@ const App = () => {
           <Routes>
             <Route
               path="/login"
-              element={
-                user ? (
-                  <Navigate to="/role-selection" replace />
-                ) : (
-                  <Login onLoginSuccess={() => {}} />
-                )
-              }
+              element={<Login onLoginSuccess={() => {}} />}
             />
 
             <Route
@@ -146,13 +140,7 @@ const App = () => {
 
             <Route
               path="/"
-              element={
-                selectedRole ? (
-                  <Navigate to="/dashboard" replace />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
+              element={<Navigate to="/login" replace />}
             />
             <Route path="*" element={<NotFound />} />
           </Routes>

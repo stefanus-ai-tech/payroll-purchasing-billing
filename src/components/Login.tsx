@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface LoginProps {
   onLoginSuccess: () => void;
@@ -12,6 +13,7 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+    const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,6 +21,7 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
 
     if (username === "Admin" && password === "Admin") {
       onLoginSuccess();
+      navigate('/role-selection');
     } else {
       toast({
         title: "Error",
