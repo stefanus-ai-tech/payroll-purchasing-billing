@@ -1,9 +1,18 @@
 import { EditDialog } from "@/components/ui/edit-dialog";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface PayrollData {
   employeeName: string;
   salary: number;
   pay_date: string;
+  pay_time: string; // Keep as string for now, will format later
 }
 
 interface EditPayrollDialogProps {
@@ -35,17 +44,15 @@ export function EditPayrollDialog({
         if (value <= 0) return "Salary must be greater than 0";
         if (value > 1000000000) return "Salary must be less than 1,000,000,000";
         return null;
-      case "pay_date":
-        const date = new Date(value);
-        const today = new Date();
-        // Allow pay_date to be in the future
+      case "pay_time":
+        if (!value) return "Time is required";
         return null;
       default:
         return null;
     }
   };
 
-    const fields = [
+  const fields = [
     {
       name: "employeeName",
       label: "Employee Name",
@@ -66,14 +73,73 @@ export function EditPayrollDialog({
     {
       name: "pay_date",
       label: "Pay Date",
-      type: "date" as const,
+      type: "custom" as const,
       required: true,
       placeholder: "Enter date",
       validate: (value: string) => validateField("pay_date", value),
+      component: Calendar,
+      mode: 'date'
     },
-  ];
+    {
+        name: "pay_time",
+        label: "Pay Time",
+        type: "custom" as const,
+        required: true,
+        placeholder: "Enter time",
+        validate: (value: string) => validateField("pay_time", value),
+        component: ({ onChange, value }: {onChange: (value: string) => void, value: string}) => {
+          const [hours, minutes] = value ? value.split(':') : ['',''];
 
-const handleSubmit = async () => {
+          const handleHourChange = (newHour: string) => {
+            const newValue = `${newHour}:${minutes || '00'}`;
+            onChange(newValue)
+          }
+
+          const handleMinuteChange = (newMinute: string) => {
+            const newValue = `${hours || '00'}:${newMinute}`;
+            onChange(newValue)
+          }
+          
+          return (
+            <div className="flex items-center gap-2">
+              <Select onValueChange={handleHourChange} value={hours}>
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue placeholder="Hours" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 24 }).map((_, i) => {
+                    const hour = i.toString().padStart(2, "0");
+                    return (
+                      <SelectItem key={hour} value={hour}>
+                        {hour}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              <span>:</span>
+              <Select onValueChange={handleMinuteChange} value={minutes}>
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue placeholder="Minutes" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 60 }).map((_, i) => {
+                    const minute = i.toString().padStart(2, "0");
+                    return (
+                      <SelectItem key={minute} value={minute}>
+                        {minute}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+          )
+        }
+      },
+    ];
+
+  const handleSubmit = async () => {
     const errors = fields
       .map((field) => ({
         field: field.name,
@@ -88,19 +154,6 @@ const handleSubmit = async () => {
       console.error("Validation errors:", errors);
       return;
     }
-
-    // Format the pay_date to "yyyy-MM-dd"
-    let formattedDate = new Date().toISOString().split("T")[0]; // Default to today's date
-    if (editPayroll.pay_date) {
-      const date = new Date(editPayroll.pay_date);
-      if (!isNaN(date.getTime())) {
-        formattedDate = editPayroll.pay_date.split("T")[0];
-      }
-    }
-
-    const formattedPayroll = { ...editPayroll, pay_date: formattedDate };
-
-    setEditPayroll(formattedPayroll);
     onSubmit();
   };
 

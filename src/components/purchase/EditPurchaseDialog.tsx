@@ -1,16 +1,61 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { EditDialog } from "@/components/ui/edit-dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+
+const to24Hour = (time12: string | undefined): string => {
+  if (!time12) return "";
+
+  // Check if it's already in 24-hour format
+  if (time12.match(/^\d{2}:\d{2}$/)) return time12;
+
+  const [timePart, period] = time12.split(" ");
+  if (!timePart || !period) return "";
+
+  let [hours, minutes] = timePart.split(":").map(Number);
+  if (isNaN(hours) || isNaN(minutes)) return "";
+
+  if (hours === 12) {
+    hours = period === "PM" ? 12 : 0;
+  } else if (period === "PM") {
+    hours += 12;
+  }
+
+  return `${hours.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")}`;
+};
+
+const to12Hour = (time24: string): string => {
+  if (!time24) return "";
+
+  const [hours24, minutes] = time24.split(":").map(Number);
+  if (isNaN(hours24) || isNaN(minutes)) return "";
+
+  const period = hours24 >= 12 ? "PM" : "AM";
+  const hours12 = hours24 === 0 ? 12 : hours24 > 12 ? hours24 - 12 : hours24;
+
+  return `${hours12.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")} ${period}`;
+};
 
 interface PurchaseData {
   itemName: string;
   quantity: number;
-  created_at: string;
+  date: Date;
+  time: string; // Will always be in 24-hour format "HH:mm"
   no_urut: number;
-}
-
-interface ValidationError {
-  field: keyof PurchaseData;
-  message: string;
+  created_at?: string;
 }
 
 interface EditPurchaseDialogProps {
@@ -21,14 +66,71 @@ interface EditPurchaseDialogProps {
   onSubmit: () => void;
 }
 
-export function EditPurchaseDialog({
+const formatDateTimeString = (date: Date): string => {
+  try {
+    return date.toISOString().slice(0, 16);
+  } catch {
+    return new Date().toISOString().slice(0, 16);
+  }
+};
+
+const parseDateTimeString = (
+  dateTimeStr: string
+): { date: Date; time: string } => {
+  const date = new Date(dateTimeStr);
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const time = `${hours}:${minutes}`;
+  return { date, time };
+};
+
+const formatDate = (date: Date): string => {
+  try {
+    if (!date || isNaN(date.getTime())) {
+      return new Date().toISOString().split("T")[0];
+    }
+    return date.toISOString().split("T")[0];
+  } catch (error) {
+    console.warn("Error formatting date:", error);
+    return new Date().toISOString().split("T")[0];
+  }
+};
+
+const formatTime = (date: Date): string => {
+  try {
+    if (!date || isNaN(date.getTime())) {
+      const now = new Date();
+      return `${now.getHours().toString().padStart(2, "0")}:${now
+        .getMinutes()
+        .toString()
+        .padStart(2, "0")}`;
+    }
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    return `${hours}:${minutes}`;
+  } catch (error) {
+    console.warn("Error formatting time:", error);
+    const now = new Date();
+    return `${now.getHours().toString().padStart(2, "0")}:${now
+      .getMinutes()
+      .toString()
+      .padStart(2, "0")}`;
+  }
+};
+
+export const EditPurchaseDialog: React.FC<EditPurchaseDialogProps> = ({
   isOpen,
   onOpenChange,
   editPurchase,
   setEditPurchase,
   onSubmit,
-}: EditPurchaseDialogProps) {
-  // Validate each field based on its name and value
+}) => {
+  const [localPurchase, setLocalPurchase] = useState(editPurchase);
+
+  useEffect(() => {
+    setLocalPurchase(editPurchase);
+  }, [editPurchase]);
+
   const validateField = (
     name: keyof PurchaseData,
     value: any
@@ -44,63 +146,63 @@ export function EditPurchaseDialog({
         if (value > 1000000000)
           return "Quantity must be less than 1,000,000,000";
         return null;
-      case "created_at":
-        const date = new Date(value);
-        const today = new Date();
-        // Allow created_at to be in the future
-        return null;
-      case "no_urut":
-        return null; // No validation needed for no_urut
       default:
         return null;
     }
   };
 
-  const fields = [
-    {
-      name: "itemName",
-      label: "Item Name",
-      type: "text" as const,
-      required: true,
-      placeholder: "Enter item name",
-      validate: (value: string) => validateField("itemName", value),
-    },
-    {
-      name: "quantity",
-      label: "Amount",
-      type: "number" as const,
-      required: true,
-      min: 1,
-      placeholder: "Enter Amoun",
-      validate: (value: number) => validateField("quantity", value),
-    },
-    {
-      name: "created_at",
-      label: "Created At",
-      type: "date" as const,
-      required: true,
-      placeholder: "Enter date",
-      validate: (value: string) => validateField("created_at", value),
-    },
-    {
-      name: "no_urut",
-      label: "No Urut",
-      type: "number" as const,
-      required: false,
-      placeholder: "Auto-generated",
-      validate: (value: number) => validateField("no_urut", value),
-      readOnly: true,
-    },
-  ];
+  const handleDateTimeChange = (dateTimeStr: string) => {
+    try {
+      const { date, time } = parseDateTimeString(dateTimeStr);
+      if (!isNaN(date.getTime())) {
+        setLocalPurchase((prev) => ({
+          ...prev,
+          date,
+          time,
+        }));
+      }
+    } catch (error) {
+      console.error("Invalid datetime:", error);
+    }
+  };
+
+  const handleDateChange = (dateStr: string) => {
+    try {
+      const newDate = new Date(dateStr);
+      if (!isNaN(newDate.getTime())) {
+        let currentHours = 0;
+        let currentMinutes = 0;
+
+        if (!isNaN(localPurchase.date.getTime())) {
+          currentHours = localPurchase.date.getHours();
+          currentMinutes = localPurchase.date.getMinutes();
+        }
+
+        newDate.setHours(currentHours, currentMinutes, 0, 0);
+
+        setLocalPurchase((prev) => ({
+          ...prev,
+          date: newDate,
+          time: formatTime(newDate),
+        }));
+      }
+    } catch (error) {
+      console.error("Invalid date:", error);
+    }
+  };
+
+  const handleTimeChange = (timeStr: string) => {
+    setLocalPurchase((prev) => ({
+      ...prev,
+      time: to12Hour(timeStr),
+    }));
+  };
 
   const handleSubmit = async () => {
-    const errors = fields
-      .map((field) => ({
-        field: field.name,
-        error: validateField(
-          field.name as keyof PurchaseData,
-          editPurchase[field.name as keyof PurchaseData]
-        ),
+    const errors = Object.entries(localPurchase)
+      .map(([key, value]) => ({
+        field: key,
+        error: validateField(key as keyof PurchaseData, value),
       }))
       .filter((result) => result.error !== null);
 
@@ -109,30 +211,113 @@ export function EditPurchaseDialog({
       return;
     }
 
-    // Format the created_at to "yyyy-MM-dd"
-    let formattedDate = new Date().toISOString().split("T")[0]; // Default to today's date
-    if (editPurchase.created_at) {
-      const date = new Date(editPurchase.created_at);
-      if (!isNaN(date.getTime())) {
-        formattedDate = editPurchase.created_at.split("T")[0];
+    try {
+      const dateTime = new Date(localPurchase.date);
+
+      const time24 = to24Hour(localPurchase.time);
+      if (!time24) {
+        throw new Error("Invalid time format");
       }
+
+      const [hours, minutes] = time24.split(":").map(Number);
+      if (isNaN(hours) || isNaN(minutes)) {
+        throw new Error("Invalid time values");
+      }
+
+      dateTime.setHours(hours, minutes, 0, 0);
+
+      if (isNaN(dateTime.getTime())) {
+        throw new Error("Invalid date/time combination");
+      }
+
+      const updatedPurchase = {
+        ...localPurchase,
+        date: dateTime,
+        created_at: dateTime.toISOString(),
+      };
+
+      setEditPurchase(updatedPurchase);
+      onSubmit();
+    } catch (error) {
+      console.error("Error processing date/time:", error);
     }
-
-    const formattedPurchase = { ...editPurchase, created_at: formattedDate };
-
-    setEditPurchase(formattedPurchase);
-    onSubmit();
-};
+  };
 
   return (
-    <EditDialog
-      isOpen={isOpen}
-      onOpenChange={onOpenChange}
-      title="Edit Purchase Request"
-      fields={fields}
-      editData={editPurchase}
-      setEditData={setEditPurchase}
-      onSubmit={handleSubmit}
-    />
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Edit Purchase Request</DialogTitle>
+          <DialogDescription>
+            Make changes to your purchase request here. Click save when you're
+            done.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="itemName">Item Name</Label>
+              <Input
+                id="itemName"
+                value={localPurchase.itemName}
+                onChange={(e) =>
+                  setLocalPurchase((prev) => ({
+                    ...prev,
+                    itemName: e.target.value,
+                  }))
+                }
+                placeholder="Enter item name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="quantity">Amount</Label>
+              <Input
+                id="quantity"
+                type="number"
+                value={localPurchase.quantity}
+                onChange={(e) =>
+                  setLocalPurchase((prev) => ({
+                    ...prev,
+                    quantity: Number(e.target.value),
+                  }))
+                }
+                placeholder="Enter amount"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="date">Date</Label>
+              <Input
+                id="date"
+                type="date"
+                value={formatDate(localPurchase.date)}
+                onChange={(e) => handleDateChange(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="time">Time</Label>
+              <Input
+                id="time"
+                type="time"
+                value={localPurchase.time ? to24Hour(localPurchase.time) : ""}
+                onChange={(e) => handleTimeChange(e.target.value)}
+                step="60"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="no_urut">No Urut</Label>
+              <Input
+                id="no_urut"
+                type="number"
+                value={localPurchase.no_urut}
+                readOnly
+              />
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={handleSubmit}>Save changes</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
-}
+};

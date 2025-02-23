@@ -109,7 +109,7 @@ export default function Purchase() {
             request_id: purchaseToEdit?.request_id || "",
             requester: purchaseToEdit?.requester || "",
             status: purchaseToEdit?.status || "Pending",
-            created_at: purchase.created_at,
+            created_at: purchase.date + "T" + purchase.time,
             no_urut: purchase.no_urut,
             amount: purchase.quantity,
             items: purchase.itemName

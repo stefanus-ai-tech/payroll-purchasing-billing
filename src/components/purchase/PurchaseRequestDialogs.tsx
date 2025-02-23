@@ -3,6 +3,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,12 +28,16 @@ type PurchaseRequestDialogsProps = {
   deletePurchaseRequest: (id: string) => void;
   selectedRequest: PurchaseRequest | null;
   purchaseToEdit: PurchaseRequest | null;
-  setPurchaseToEdit: (purchase: {
-    itemName: string;
-    quantity: number;
-    created_at: string;
-    no_urut: number;
-  } | null) => void;
+  setPurchaseToEdit: (
+    purchase: {
+      itemName: string;
+      quantity: number;
+      date: string;
+      time: string;
+      no_urut: number;
+      created_at: string;
+    } | null
+  ) => void;
   purchaseToDelete: PurchaseRequest | null;
   isCreateOpen: boolean;
   setIsCreateOpen: Dispatch<SetStateAction<boolean>>;
@@ -60,8 +65,53 @@ export const PurchaseRequestDialogs: React.FC<PurchaseRequestDialogsProps> = ({
   setIsEditOpen,
   isDeleteOpen,
   setIsDeleteOpen,
-  setPurchaseToEdit
+  setPurchaseToEdit,
 }) => {
+  const formatPurchaseToEdit = (purchase: PurchaseRequest | null) => {
+    if (!purchase) {
+      return {
+        itemName: "",
+        quantity: 0,
+        date: new Date(),
+        time: new Date().toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }),
+        no_urut: 0,
+      };
+    }
+
+    const date = purchase.created_at
+      ? new Date(purchase.created_at)
+      : new Date();
+
+    return {
+      itemName: purchase.items,
+      quantity: purchase.amount,
+      date: date,
+      time: date.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      }),
+      no_urut: purchase.no_urut,
+    };
+  };
+
+  const convertTo24Hour = (time12h: string): string => {
+    const [timePart, period] = time12h.split(" ");
+    let [hours, minutes] = timePart.split(":").map(Number);
+
+    if (hours === 12) {
+      hours = period === "PM" ? 12 : 0;
+    } else if (period === "PM") {
+      hours += 12;
+    }
+
+    return `${hours.toString().padStart(2, "0")}:${minutes}`;
+  };
+
   return (
     <>
       {/* Create Request Dialog */}
@@ -76,6 +126,7 @@ export const PurchaseRequestDialogs: React.FC<PurchaseRequestDialogsProps> = ({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Request Details</DialogTitle>
+            <DialogDescription>View purchase request details</DialogDescription>
           </DialogHeader>
           {selectedRequest && (
             <div className="space-y-4 py-4">
@@ -163,29 +214,32 @@ export const PurchaseRequestDialogs: React.FC<PurchaseRequestDialogsProps> = ({
       <EditPurchaseDialog
         isOpen={isEditOpen}
         onOpenChange={setIsEditOpen}
-        editPurchase={
-          purchaseToEdit
-            ? {
-                itemName: purchaseToEdit.items,
-                quantity: purchaseToEdit.amount,
-                created_at: purchaseToEdit.created_at,
-                no_urut: purchaseToEdit.no_urut,
-              }
-            : { // Provide a default object when purchaseToEdit is null
-                itemName: '',
-                quantity: 0,
-                created_at: '',
-                no_urut: 0
-              }
-        }
-        setEditPurchase={setPurchaseToEdit}
+        editPurchase={formatPurchaseToEdit(purchaseToEdit)}
+        setEditPurchase={(updatedPurchase) => {
+          if (purchaseToEdit && updatedPurchase) {
+            const combinedDate = new Date(updatedPurchase.date);
+            const time24 = convertTo24Hour(updatedPurchase.time);
+            const [hours, minutes] = time24.split(":");
+
+            combinedDate.setHours(parseInt(hours), parseInt(minutes));
+
+            setPurchaseToEdit({
+              ...purchaseToEdit,
+              itemName: updatedPurchase.itemName,
+              quantity: updatedPurchase.quantity,
+              created_at: combinedDate.toISOString(),
+              no_urut: updatedPurchase.no_urut,
+              date: combinedDate.toISOString().split("T")[0],
+              time: updatedPurchase.time,
+            });
+          }
+        }}
         onSubmit={() => {
           if (purchaseToEdit) {
             editPurchaseRequest(purchaseToEdit);
           }
-
         }}
-/>
+      />
 
       {/* Delete Purchase Request Dialog */}
       <DeletePurchaseDialog
