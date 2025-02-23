@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/MainLayout";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -251,10 +251,12 @@ export default function Payroll() {
           </div>
         </div>
 
-        <PayrollTable
-          employees={employees}
-          onView={(employee) => {
-            setSelectedEmployee(employee);
+        <Card>
+          <CardContent>
+            <PayrollTable
+              employees={employees}
+              onView={(employee) => {
+                setSelectedEmployee(employee);
             setIsViewOpen(true);
           }}
           onSave={(employee) => {
@@ -265,6 +267,8 @@ export default function Payroll() {
             setIsDeleteOpen(true);
           }}
         />
+          </CardContent>
+        </Card>
       </div>
 
       {/* Create Employee Dialog */}
