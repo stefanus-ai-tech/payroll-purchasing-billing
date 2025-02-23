@@ -23,24 +23,19 @@ export default function Purchase() {
     isLoading,
     createRequest,
     updateStatus,
-    editPurchaseRequest,
     deletePurchaseRequest,
   } = usePurchaseRequests();
 
   const [selectedRequest, setSelectedRequest] =
     useState<PurchaseRequest | null>(null);
-  const [purchaseToEdit, setPurchaseToEdit] = useState<PurchaseRequest | null>(
-    null
-  );
   const [purchaseToDelete, setPurchaseToDelete] =
     useState<PurchaseRequest | null>(null);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
-  if (isLoading) {
+    if (isLoading) {
     return (
       <MainLayout>
         <div className="flex items-center justify-center h-screen">
@@ -73,10 +68,6 @@ export default function Purchase() {
                 setSelectedRequest(request);
                 setIsViewOpen(true);
               }}
-              onEdit={(request) => {
-                setPurchaseToEdit(request);
-                setIsEditOpen(true);
-              }}
               onDelete={(request) => {
                 setPurchaseToDelete(request);
                 setIsDeleteOpen(true);
@@ -85,36 +76,18 @@ export default function Purchase() {
           </CardContent>
         </Card>
       </div>
-
       <PurchaseRequestDialogs
         createRequest={createRequest.mutate}
         updateStatus={updateStatus.mutate}
-        editPurchaseRequest={editPurchaseRequest.mutate}
         deletePurchaseRequest={deletePurchaseRequest.mutate}
         selectedRequest={selectedRequest}
-        purchaseToEdit={purchaseToEdit}
         purchaseToDelete={purchaseToDelete}
         isCreateOpen={isCreateOpen}
         setIsCreateOpen={setIsCreateOpen}
         isViewOpen={isViewOpen}
         setIsViewOpen={setIsViewOpen}
-        isEditOpen={isEditOpen}
-        setIsEditOpen={setIsEditOpen}
         isDeleteOpen={isDeleteOpen}
         setIsDeleteOpen={setIsDeleteOpen}
-        setPurchaseToEdit={(purchase) => {
-          if (!purchase) {
-            setPurchaseToEdit(null);
-            return;
-          }
-
-          // Correctly map properties from EditPurchaseDialog to PurchaseRequest
-          const updatedPurchaseRequest: PurchaseRequest = {
-            ...purchase,
-          };
-
-          setPurchaseToEdit(updatedPurchaseRequest);
-        }}
       />
     </MainLayout>
   );

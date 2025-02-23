@@ -1,32 +1,30 @@
 import {
-Table,
-TableBody,
-TableCell,
-TableHead,
-TableHeader,
-TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PurchaseRequest } from "@/pages/Purchase";
 
 type PurchaseTableProps = {
-requests: PurchaseRequest[];
-onView: (request: PurchaseRequest) => void;
-onEdit: (request: PurchaseRequest) => void;
-onDelete: (request: PurchaseRequest) => void;
+  requests: PurchaseRequest[];
+  onView: (request: PurchaseRequest) => void;
+  onDelete: (request: PurchaseRequest) => void;
 };
 
 export const PurchaseTable: React.FC<PurchaseTableProps> = ({
-requests,
-onView,
-onEdit,
-onDelete,
+  requests,
+  onView,
+  onDelete,
 }) => {
-return (
-  <Table>
-    <TableHeader>
-      <TableRow>
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
         <TableHead>No Urut</TableHead>
         <TableHead>Request ID</TableHead>
         <TableHead>Requester</TableHead>
@@ -59,18 +57,15 @@ return (
             </Badge>
           </TableCell>
           <TableCell>
-            {new Date(request.created_at).toLocaleString('en-US', {
-              dateStyle: 'medium',
-              timeStyle: 'short',
-              hour12: false
+            {new Date(request.created_at).toLocaleString("en-US", {
+              dateStyle: "medium",
+              timeStyle: "short",
+              hour12: false,
             })}
           </TableCell>
           <TableCell className="text-right">
             <Button variant="ghost" onClick={() => onView(request)}>
               View Details
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => onEdit(request)}>
-              Edit
             </Button>
             <Button variant="ghost" onClick={() => onDelete(request)}>
               Delete
