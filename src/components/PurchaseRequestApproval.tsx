@@ -3,6 +3,11 @@ import { PurchaseRequest, ApprovalSignature } from "@/types/purchase";
 import { usePurchaseRequests } from "@/hooks/usePurchaseRequests";
 import { useUser } from "@/hooks/useUser";
 
+export interface User {
+  id: string;
+  role: "admin" | "approval_leader" | "nom" | "sm";
+}
+
 interface ApprovalProps {
   request: PurchaseRequest;
 }
