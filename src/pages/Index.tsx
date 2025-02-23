@@ -51,7 +51,7 @@ export default function Dashboard() {
         const { data: purchaseData, error: purchaseError, count: purchaseCount } = await supabase
           .from('purchase_requests')
           .select('*', { count: 'exact' })
-          .eq('status', 'pending');
+          .eq('status', 'Pending');
 
         if (purchaseError) {
           throw purchaseError;
