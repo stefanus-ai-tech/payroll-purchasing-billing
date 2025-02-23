@@ -29,14 +29,7 @@ type PurchaseRequestDialogsProps = {
   selectedRequest: PurchaseRequest | null;
   purchaseToEdit: PurchaseRequest | null;
   setPurchaseToEdit: (
-    purchase: {
-      itemName: string;
-      quantity: number;
-      date: string;
-      time: string;
-      no_urut: number;
-      created_at: string;
-    } | null
+    purchase: PurchaseRequest | null
   ) => void;
   purchaseToDelete: PurchaseRequest | null;
   isCreateOpen: boolean;
@@ -65,193 +58,150 @@ export const PurchaseRequestDialogs: React.FC<PurchaseRequestDialogsProps> = ({
   setIsEditOpen,
   isDeleteOpen,
   setIsDeleteOpen,
-  setPurchaseToEdit,
+setPurchaseToEdit,
 }) => {
-  const formatPurchaseToEdit = (purchase: PurchaseRequest | null) => {
-    if (!purchase) {
-      return {
-        itemName: "",
-        quantity: 0,
-        date: new Date(),
-        time: new Date().toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }),
-        no_urut: 0,
-      };
-    }
-
-    const date = purchase.created_at
-      ? new Date(purchase.created_at)
-      : new Date();
-
+const formatPurchaseToEdit = (purchase: PurchaseRequest | null) => {
+  if (!purchase) {
     return {
-      itemName: purchase.items,
-      quantity: purchase.amount,
-      date: date,
-      time: date.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      }),
-      no_urut: purchase.no_urut,
+      id: "",
+      request_id: "",
+      requester: "",
+      items: "",
+      amount: 0,
+      status: "Pending" as const,
+      created_at: new Date().toISOString(),
+      modified_at: "",
+      no_urut: 0,
     };
-  };
+  }
 
-  const convertTo24Hour = (time12h: string): string => {
-    const [timePart, period] = time12h.split(" ");
-    let [hours, minutes] = timePart.split(":").map(Number);
+  return purchase;
+};
 
-    if (hours === 12) {
-      hours = period === "PM" ? 12 : 0;
-    } else if (period === "PM") {
-      hours += 12;
-    }
+return (
+  <>
+    {/* Create Request Dialog */}
+    <CreatePurchaseRequestDialog
+      isOpen={isCreateOpen}
+      onOpenChange={setIsCreateOpen}
+      onCreate={createRequest}
+    />
 
-    return `${hours.toString().padStart(2, "0")}:${minutes}`;
-  };
-
-  return (
-    <>
-      {/* Create Request Dialog */}
-      <CreatePurchaseRequestDialog
-        isOpen={isCreateOpen}
-        onOpenChange={setIsCreateOpen}
-        onCreate={createRequest}
-      />
-
-      {/* View Request Dialog */}
-      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Request Details</DialogTitle>
-            <DialogDescription>View purchase request details</DialogDescription>
-          </DialogHeader>
-          {selectedRequest && (
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Request ID</Label>
-                  <p className="font-medium">{selectedRequest.request_id}</p>
-                </div>
-                <div>
-                  <Label>No Urut</Label>
-                  <p className="font-medium">{selectedRequest.no_urut}</p>
-                </div>
-                <div>
-                  <Label>Status</Label>
-                  <Badge
-                    className="mt-1"
-                    variant={
-                      selectedRequest.status === "Approved"
-                        ? "default"
-                        : selectedRequest.status === "Rejected"
-                        ? "destructive"
-                        : "secondary"
-                    }
-                  >
-                    {selectedRequest.status}
-                  </Badge>
-                </div>
-                <div>
-                  <Label>Requester</Label>
-                  <p className="font-medium">{selectedRequest.requester}</p>
-                </div>
-                <div>
-                  <Label>Amount</Label>
-                  <p className="font-medium">
-                    Rp {selectedRequest.amount.toLocaleString()}
-                  </p>
-                </div>
-                <div className="col-span-2">
-                  <Label>Items</Label>
-                  <p className="font-medium whitespace-pre-wrap">
-                    {selectedRequest.items}
-                  </p>
-                </div>
+    {/* View Request Dialog */}
+    <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Request Details</DialogTitle>
+          <DialogDescription>View purchase request details</DialogDescription>
+        </DialogHeader>
+        {selectedRequest && (
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Request ID</Label>
+                <p className="font-medium">{selectedRequest.request_id}</p>
               </div>
-              <div className="flex gap-2 mt-4">
-                <Button
+              <div>
+                <Label>No Urut</Label>
+                <p className="font-medium">{selectedRequest.no_urut}</p>
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Badge
+                  className="mt-1"
                   variant={
                     selectedRequest.status === "Approved"
                       ? "default"
-                      : "outline"
-                  }
-                  disabled={selectedRequest.status !== "Pending"}
-                  onClick={() =>
-                    updateStatus({
-                      id: selectedRequest.id,
-                      status: "Approved",
-                    })
-                  }
-                >
-                  Approve
-                </Button>
-                <Button
-                  variant={
-                    selectedRequest.status === "Rejected"
+                      : selectedRequest.status === "Rejected"
                       ? "destructive"
-                      : "outline"
-                  }
-                  disabled={selectedRequest.status !== "Pending"}
-                  onClick={() =>
-                    updateStatus({
-                      id: selectedRequest.id,
-                      status: "Rejected",
-                    })
+                      : "secondary"
                   }
                 >
-                  Reject
-                </Button>
+                  {selectedRequest.status}
+                </Badge>
+              </div>
+              <div>
+                <Label>Requester</Label>
+                <p className="font-medium">{selectedRequest.requester}</p>
+              </div>
+              <div>
+                <Label>Amount</Label>
+                <p className="font-medium">
+                  Rp {selectedRequest.amount.toLocaleString()}
+                </p>
+              </div>
+              <div className="col-span-2">
+                <Label>Items</Label>
+                <p className="font-medium whitespace-pre-wrap">
+                  {selectedRequest.items}
+                </p>
               </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            <div className="flex gap-2 mt-4">
+              <Button
+                variant={
+                  selectedRequest.status === "Approved"
+                    ? "default"
+                    : "outline"
+                }
+                disabled={selectedRequest.status !== "Pending"}
+                onClick={() =>
+                  updateStatus({
+                    id: selectedRequest.id,
+                    status: "Approved",
+                  })
+                }
+              >
+                Approve
+              </Button>
+              <Button
+                variant={
+                  selectedRequest.status === "Rejected"
+                    ? "destructive"
+                    : "outline"
+                }
+                disabled={selectedRequest.status !== "Pending"}
+                onClick={() =>
+                  updateStatus({
+                    id: selectedRequest.id,
+                    status: "Rejected",
+                  })
+                }
+              >
+                Reject
+              </Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
 
-      {/* Edit Purchase Request Dialog */}
-      <EditPurchaseDialog
-        isOpen={isEditOpen}
-        onOpenChange={setIsEditOpen}
-        editPurchase={formatPurchaseToEdit(purchaseToEdit)}
-        setEditPurchase={(updatedPurchase) => {
-          if (purchaseToEdit && updatedPurchase) {
-            const combinedDate = new Date(updatedPurchase.date);
-            const time24 = convertTo24Hour(updatedPurchase.time);
-            const [hours, minutes] = time24.split(":");
+    {/* Edit Purchase Request Dialog */}
+    <EditPurchaseDialog
+      isOpen={isEditOpen}
+      onOpenChange={setIsEditOpen}
+      editPurchase={formatPurchaseToEdit(purchaseToEdit)}
+      setEditPurchase={(updatedPurchase) => {
+          setPurchaseToEdit(updatedPurchase);
+      }}
+      onSubmit={() => {
+        if (purchaseToEdit) {
+          editPurchaseRequest(purchaseToEdit);
+        }
+      }}
+    />
 
-            combinedDate.setHours(parseInt(hours), parseInt(minutes));
-
-            setPurchaseToEdit({
-              ...purchaseToEdit,
-              itemName: updatedPurchase.itemName,
-              quantity: updatedPurchase.quantity,
-              created_at: combinedDate.toISOString(),
-              no_urut: updatedPurchase.no_urut,
-              date: combinedDate.toISOString().split("T")[0],
-              time: updatedPurchase.time,
-            });
-          }
-        }}
-        onSubmit={() => {
-          if (purchaseToEdit) {
-            editPurchaseRequest(purchaseToEdit);
-          }
-        }}
-      />
-
-      {/* Delete Purchase Request Dialog */}
-      <DeletePurchaseDialog
-        isOpen={isDeleteOpen}
-        onOpenChange={setIsDeleteOpen}
-        purchase={purchaseToDelete}
-        onConfirm={() => {
-          if (purchaseToDelete) {
-            deletePurchaseRequest(purchaseToDelete.id);
-          }
-        }}
-      />
-    </>
-  );
+    {/* Delete Purchase Request Dialog */}
+    <DeletePurchaseDialog
+      isOpen={isDeleteOpen}
+      onOpenChange={setIsDeleteOpen}
+      purchase={purchaseToDelete}
+      onConfirm={() => {
+        if (purchaseToDelete) {
+          deletePurchaseRequest(purchaseToDelete.id);
+        }
+      }}
+    />
+  </>
+);
 };

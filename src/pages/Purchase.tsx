@@ -24,7 +24,7 @@ export default function Purchase() {
     createRequest,
     updateStatus,
     editPurchaseRequest,
-    deletePurchaseRequest
+    deletePurchaseRequest,
   } = usePurchaseRequests();
 
   const [selectedRequest, setSelectedRequest] =
@@ -32,9 +32,8 @@ export default function Purchase() {
   const [purchaseToEdit, setPurchaseToEdit] = useState<PurchaseRequest | null>(
     null
   );
-  const [purchaseToDelete, setPurchaseToDelete] = useState<PurchaseRequest | null>(
-    null
-  );
+  const [purchaseToDelete, setPurchaseToDelete] =
+    useState<PurchaseRequest | null>(null);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
@@ -104,16 +103,17 @@ export default function Purchase() {
         isDeleteOpen={isDeleteOpen}
         setIsDeleteOpen={setIsDeleteOpen}
         setPurchaseToEdit={(purchase) => {
-          setPurchaseToEdit(purchase ? {
-            id: purchaseToEdit?.id || "",
-            request_id: purchaseToEdit?.request_id || "",
-            requester: purchaseToEdit?.requester || "",
-            status: purchaseToEdit?.status || "Pending",
-            created_at: purchase.date + "T" + purchase.time,
-            no_urut: purchase.no_urut,
-            amount: purchase.quantity,
-            items: purchase.itemName
-          } : null)
+          if (!purchase) {
+            setPurchaseToEdit(null);
+            return;
+          }
+
+          // Correctly map properties from EditPurchaseDialog to PurchaseRequest
+          const updatedPurchaseRequest: PurchaseRequest = {
+            ...purchase,
+          };
+
+          setPurchaseToEdit(updatedPurchaseRequest);
         }}
       />
     </MainLayout>

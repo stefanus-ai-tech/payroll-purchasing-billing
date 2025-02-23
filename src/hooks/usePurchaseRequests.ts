@@ -17,55 +17,61 @@ export const usePurchaseRequests = () => {
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-      return data as PurchaseRequest[];
+      return data as any as PurchaseRequest[];
     },
   });
 
-    // Create purchase request
-    const createRequest = useMutation({
-      mutationFn: async (newRequest: { requester: string, items: string, amount: number }) => {
-        // Generate request ID
-        const requestId = `PR${Math.floor(Math.random() * 10000)
-          .toString()
-          .padStart(4, "0")}`;
+  // Create purchase request
+  const createRequest = useMutation({
+    mutationFn: async (newRequest: {
+      requester: string;
+      items: string;
+      amount: number;
+    }) => {
+      // Generate request ID
+      const requestId = `PR${Math.floor(Math.random() * 10000)
+        .toString()
+        .padStart(4, "0")}`;
 
-        // Get the latest no_urut
-        const { data: latestRequests, error: latestError } = await supabase
-          .from("purchase_requests")
-          .select("no_urut")
-          .order("no_urut", { ascending: false })
-          .limit(1) as any; // Cast to any to bypass TS errors
+      // Get the latest no_urut
+      const { data: latestRequests, error: latestError } = (await supabase
+        .from("purchase_requests")
+        .select("no_urut")
+        .order("no_urut", { ascending: false })
+        .limit(1)) as any; // Cast to any to bypass TS errors
 
-        if (latestError) throw latestError;
+      if (latestError) throw latestError;
 
-        const nextNoUrut = ((latestRequests && latestRequests[0] && latestRequests[0].no_urut) ?? 0) + 1;
+      const nextNoUrut =
+        ((latestRequests && latestRequests[0] && latestRequests[0].no_urut) ??
+          0) + 1;
 
-        const { error } = await supabase.from("purchase_requests").insert({
-          request_id: requestId,
-          requester: newRequest.requester,
-          items: newRequest.items,
-          amount: newRequest.amount,
-          status: "Pending",
-          no_urut: nextNoUrut
-        });
+      const { error } = await supabase.from("purchase_requests").insert({
+        request_id: requestId,
+        requester: newRequest.requester,
+        items: newRequest.items,
+        amount: newRequest.amount,
+        status: "Pending",
+        no_urut: nextNoUrut,
+      });
 
-        if (error) throw error;
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["purchase_requests"] });
-        toast({
-          title: "Success",
-          description: "Purchase request created successfully",
-        });
-      },
-      onError: (error) => {
-        toast({
-          title: "Error",
-          description: "Failed to create request: " + error.message,
-          variant: "destructive",
-        });
-      },
-    });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchase_requests"] });
+      toast({
+        title: "Success",
+        description: "Purchase request created successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to create request: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   // Update request status
   const updateStatus = useMutation({
@@ -97,36 +103,41 @@ export const usePurchaseRequests = () => {
   });
 
   // Edit purchase request
-    const editPurchaseRequest = useMutation({
-      mutationFn: async (updatedRequest: PurchaseRequest) => {
-        const { error } = await supabase
-          .from("purchase_requests")
-          .update({
-            requester: updatedRequest.requester,
-            items: updatedRequest.items,
-            amount: updatedRequest.amount,
-            created_at: updatedRequest.created_at,
-            status: "Pending"
-          })
-          .eq("id", updatedRequest.id);
+  const editPurchaseRequest = useMutation({
+    mutationFn: async (updatedRequest: PurchaseRequest) => {
+      const { error } = await supabase
+        .from("purchase_requests")
+        .update({
+          requester: updatedRequest.requester,
+          items: updatedRequest.items,
+          amount: updatedRequest.amount,
+          no_urut: updatedRequest.no_urut,
+          status: updatedRequest.status,
+        })
+        .eq("id", updatedRequest.id);
 
-        if (error) throw error;
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["purchase_requests"] });
-        toast({
-          title: "Success",
-          description: "Purchase request updated successfully",
-        });
-      },
-      onError: (error) => {
-        toast({
-          title: "Error",
-          description: "Failed to update purchase request: " + error.message,
-          variant: "destructive",
-        });
-      },
-    });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchase_requests"] });
+      // Log the requests after invalidation
+      console.log(
+        "Requests after update:",
+        queryClient.getQueryData(["purchase_requests"])
+      );
+      toast({
+        title: "Success",
+        description: "Purchase request updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update purchase request: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   // Delete purchase request
   const deletePurchaseRequest = useMutation({
@@ -160,6 +171,6 @@ export const usePurchaseRequests = () => {
     createRequest,
     updateStatus,
     editPurchaseRequest,
-    deletePurchaseRequest
+    deletePurchaseRequest,
   };
 };
