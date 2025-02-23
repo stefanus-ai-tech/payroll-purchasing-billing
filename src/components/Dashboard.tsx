@@ -1,34 +1,12 @@
-import { useEffect, useState } from "react";
-import { Navigate, Outlet } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { Outlet } from "react-router-dom";
 import MainLayout from "./MainLayout";
+import { useUser } from "@/hooks/useUser";
 
 export const Dashboard = () => {
-  const [session, setSession] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+    const { user, isLoading } = useUser();
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return <div>Loading...</div>;
-  }
-
-  if (!session) {
-    return <Navigate to="/login" replace />;
   }
 
   return (

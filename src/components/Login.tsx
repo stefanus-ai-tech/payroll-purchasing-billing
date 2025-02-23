@@ -1,59 +1,33 @@
-import { useState, useEffect } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 
-export const Login = () => {
-  const [email, setEmail] = useState("");
+interface LoginProps {
+  onLoginSuccess: () => void;
+}
+
+export const Login = ({ onLoginSuccess }: LoginProps) => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [session, setSession] = useState<any>(null);
   const { toast } = useToast();
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-    supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-  }, []);
-
-  // If there's a session, redirect to dashboard
-  if (session) {
-    return <Navigate to="/dashboard" replace />;
-  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Check your email",
-        description:
-          "We sent you a login link. Be sure to check your spam folder.",
-      });
-    } catch (error) {
+    if (username === "Admin" && password === "Admin") {
+      onLoginSuccess();
+    } else {
       toast({
         title: "Error",
-        description: "Error sending magic link",
+        description: "Invalid credentials",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
   };
 
   return (
@@ -62,19 +36,26 @@ export const Login = () => {
         <div>
           <h2 className="text-center text-3xl font-bold">Sign in</h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your email to receive a magic link
+            Enter your credentials
           </p>
         </div>
         <form onSubmit={handleLogin} className="space-y-4">
           <Input
-            type="email"
-            placeholder="Your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+          <Input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             required
           />
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Sending magic link..." : "Send magic link"}
+            {loading ? "Logging in..." : "Login"}
           </Button>
         </form>
       </div>
