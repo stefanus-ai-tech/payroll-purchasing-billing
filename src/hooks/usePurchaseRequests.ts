@@ -27,6 +27,7 @@ export const usePurchaseRequests = () => {
       requester: string;
       items: string;
       amount: number;
+      position: string;
     }) => {
       // Generate request ID
       const requestId = `PR${Math.floor(Math.random() * 10000)
@@ -51,6 +52,7 @@ export const usePurchaseRequests = () => {
         requester: newRequest.requester,
         items: newRequest.items,
         amount: newRequest.amount,
+        position: newRequest.position,
         status: "Pending",
         no_urut: nextNoUrut,
       });

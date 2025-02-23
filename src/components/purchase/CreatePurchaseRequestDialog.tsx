@@ -16,6 +16,7 @@ type CreatePurchaseRequestDialogProps = {
   onOpenChange: (open: boolean) => void;
   onCreate: (newRequest: {
     requester: string;
+    position: string;
     items: string;
     amount: number;
   }) => void;
@@ -26,13 +27,14 @@ export const CreatePurchaseRequestDialog: React.FC<
 > = ({ isOpen, onOpenChange, onCreate }) => {
   const [newRequest, setNewRequest] = useState({
     requester: "",
+    position: "",
     items: "",
     amount: 0,
   });
 
   const handleSubmit = () => {
     onCreate(newRequest);
-    setNewRequest({ requester: "", items: "", amount: 0 });
+    setNewRequest({ requester: "", items: "", amount: 0, position: "" });
     onOpenChange(false);
   };
 
@@ -52,6 +54,19 @@ export const CreatePurchaseRequestDialog: React.FC<
                 setNewRequest((prev) => ({
                   ...prev,
                   requester: e.target.value,
+                }))
+              }
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="position">Position</Label>
+            <Input
+              id="position"
+              value={newRequest.position}
+              onChange={(e) =>
+                setNewRequest((prev) => ({
+                  ...prev,
+                  position: e.target.value,
                 }))
               }
             />
@@ -88,7 +103,10 @@ export const CreatePurchaseRequestDialog: React.FC<
           <Button
             onClick={handleSubmit}
             disabled={
-              !newRequest.requester || !newRequest.items || !newRequest.amount
+              !newRequest.requester ||
+              !newRequest.items ||
+              !newRequest.amount ||
+              !newRequest.position
             }
           >
             Submit

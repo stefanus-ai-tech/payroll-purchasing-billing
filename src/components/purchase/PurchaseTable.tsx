@@ -28,6 +28,7 @@ export const PurchaseTable: React.FC<PurchaseTableProps> = ({
         <TableHead>No Urut</TableHead>
         <TableHead>Request ID</TableHead>
         <TableHead>Requester</TableHead>
+        <TableHead>Position</TableHead>
         <TableHead>Items</TableHead>
         <TableHead>Amount</TableHead>
         <TableHead>Status</TableHead>
@@ -41,6 +42,7 @@ export const PurchaseTable: React.FC<PurchaseTableProps> = ({
           <TableCell>{request.no_urut}</TableCell>
           <TableCell className="font-medium">{request.request_id}</TableCell>
           <TableCell>{request.requester}</TableCell>
+          <TableCell>{request.position}</TableCell>
           <TableCell>{request.items}</TableCell>
           <TableCell>Rp {request.amount.toLocaleString()}</TableCell>
           <TableCell>

@@ -15,6 +15,7 @@ export type PurchaseRequest = {
   status: "Pending" | "Approved" | "Rejected";
   created_at: string;
   no_urut: number;
+  position: string;
 };
 
 export default function Purchase() {

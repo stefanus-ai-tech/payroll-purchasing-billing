@@ -18,6 +18,7 @@ import { Dispatch, SetStateAction, useState, useEffect } from "react";
 type PurchaseRequestDialogsProps = {
   createRequest: (newRequest: {
     requester: string;
+    position: string;
     items: string;
     amount: number;
   }) => void;
@@ -25,31 +26,31 @@ type PurchaseRequestDialogsProps = {
     id: string;
     status: "Pending" | "Approved" | "Rejected";
   }) => void;
-    deletePurchaseRequest: (id: string) => void;
-    selectedRequest: PurchaseRequest | null;
-    purchaseToDelete: PurchaseRequest | null;
-    isCreateOpen: boolean;
-    setIsCreateOpen: Dispatch<SetStateAction<boolean>>;
-    isViewOpen: boolean;
-    setIsViewOpen: Dispatch<SetStateAction<boolean>>;
-    isDeleteOpen: boolean;
-    setIsDeleteOpen: Dispatch<SetStateAction<boolean>>;
+  deletePurchaseRequest: (id: string) => void;
+  selectedRequest: PurchaseRequest | null;
+  purchaseToDelete: PurchaseRequest | null;
+  isCreateOpen: boolean;
+  setIsCreateOpen: Dispatch<SetStateAction<boolean>>;
+  isViewOpen: boolean;
+  setIsViewOpen: Dispatch<SetStateAction<boolean>>;
+  isDeleteOpen: boolean;
+  setIsDeleteOpen: Dispatch<SetStateAction<boolean>>;
 };
 
 export const PurchaseRequestDialogs: React.FC<PurchaseRequestDialogsProps> = ({
-    createRequest,
-    updateStatus,
-    deletePurchaseRequest,
-    selectedRequest,
-    purchaseToDelete,
-    isCreateOpen,
-    setIsCreateOpen,
-    isViewOpen,
-    setIsViewOpen,
-    isDeleteOpen,
-    setIsDeleteOpen,
+  createRequest,
+  updateStatus,
+  deletePurchaseRequest,
+  selectedRequest,
+  purchaseToDelete,
+  isCreateOpen,
+  setIsCreateOpen,
+  isViewOpen,
+  setIsViewOpen,
+  isDeleteOpen,
+  setIsDeleteOpen,
 }) => {
-    return (
+  return (
     <>
       {/* Create Request Dialog */}
       <CreatePurchaseRequestDialog
@@ -96,9 +97,26 @@ export const PurchaseRequestDialogs: React.FC<PurchaseRequestDialogsProps> = ({
                   <p className="font-medium">{selectedRequest.requester}</p>
                 </div>
                 <div>
+                  <Label>Position</Label>
+                  <p className="font-medium">{selectedRequest.position}</p>
+                </div>
+                <div>
                   <Label>Amount</Label>
                   <p className="font-medium">
                     Rp {selectedRequest.amount.toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <Label>Timedate</Label>
+                  <p className="font-medium">
+                    {new Date(selectedRequest.created_at).toLocaleString(
+                      "en-US",
+                      {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                        hour12: false,
+                      }
+                    )}
                   </p>
                 </div>
                 <div className="col-span-2">
@@ -148,16 +166,16 @@ export const PurchaseRequestDialogs: React.FC<PurchaseRequestDialogsProps> = ({
       </Dialog>
 
       {/* Delete Purchase Request Dialog */}
-            <DeletePurchaseDialog
-                isOpen={isDeleteOpen}
-                onOpenChange={setIsDeleteOpen}
-                purchase={purchaseToDelete}
-                onConfirm={() => {
-                    if (purchaseToDelete) {
-                        deletePurchaseRequest(purchaseToDelete.id);
-                    }
-                }}
-            />
-        </>
-    );
+      <DeletePurchaseDialog
+        isOpen={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        purchase={purchaseToDelete}
+        onConfirm={() => {
+          if (purchaseToDelete) {
+            deletePurchaseRequest(purchaseToDelete.id);
+          }
+        }}
+      />
+    </>
+  );
 };
