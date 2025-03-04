@@ -21,6 +21,7 @@ import { supabase } from "./integrations/supabase/client";
 import MainLayout from "./components/MainLayout";
 import AuthCallbackPage from "@/app/auth/callback/page";
 import { Button } from "./components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card";
 
 const queryClient = new QueryClient();
 
@@ -85,10 +86,31 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedRole }) => {
       <div className="p-4">
         <h1>Dashboard</h1>
         <p>Welcome! You are logged in as: {selectedRole}</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+          <DashboardCard title="Payroll" description="Manage payroll" link="/dashboard/payroll" />
+          <DashboardCard title="Purchase" description="Manage purchases" link="/dashboard/purchase" />
+          <DashboardCard title="Billing" description="Manage billing" link="/dashboard/billing" />
+        </div>
       </div>
     </MainLayout>
   );
 };
+
+const DashboardCard: React.FC<{ title: string, description: string, link: string }> = ({ title, description, link }) => {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>{title}</CardTitle>
+                <CardDescription>{description}</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Button asChild>
+                    <a href={link}>Go</a>
+                </Button>
+            </CardContent>
+        </Card>
+    )
+}
 
 const App = () => {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
